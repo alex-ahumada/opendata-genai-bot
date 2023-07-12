@@ -1,33 +1,99 @@
 version: "3.1"
 
 intents:
+  - how_to_get_started
   - greet
   - goodbye
   - affirm
   - deny
+  - search_agenda
+  - search_event
+  - contact_info
   - mood_great
   - mood_unhappy
   - bot_challenge
+  - fetch_data
+  - show_plot
+
+entities:
+  - username
+  - event_type
+  - venue
+  - date
+
+slots:
+  username:
+    type: any
+    influence_conversation: false
+    mappings:
+      - type: from_entity
+        entity: username
+  venue:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: from_entity
+        entity: venue
+        intent: search_event
+  date:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+
+      # - type: from_entity
+      # - type: from_text
+      # - type: from_intent
+      # - type: from_trigger_intent
+      # - type: custom
 
 responses:
   utter_greet:
-  - text: "Hey! How are you?"
+    - text: "¡Hey {username}! ¿Qué tal estás?"
+      buttons:
+        - title: "¡Genial!"
+          payload: "/mood_great"
+        - title: "No muy bien..."
+          payload: "/mood_unhappy"
+    - text: "¡Hola {name}! ¿Cómo va tu día?"
+      channel: "telegram"
 
   utter_cheer_up:
-  - text: "Here is something to cheer you up:"
-    image: "https://i.imgur.com/nGF1K8f.jpg"
+    - text: "Here is something to cheer you up:"
+      image: "https://i.imgur.com/nGF1K8f.jpg"
 
   utter_did_that_help:
-  - text: "Did that help you?"
+    - text: "Did that help you?"
 
   utter_happy:
-  - text: "Great, carry on!"
+    - text: "Great, carry on!"
 
   utter_goodbye:
-  - text: "Bye"
+    - text: "Bye"
 
   utter_iamabot:
-  - text: "I am a bot, powered by Rasa."
+    - text: "I am a bot, powered by Rasa."
+
+  utter_anything_else:
+    - text: "¿Hay algo más en lo que pueda ayudarte?"
+
+actions:
+  - action_fetch_data
+  - action_show_plot
+  - action_explain_data
+
+  # utter_event_time:
+  #   - custom:
+  #     blocks:
+  #       - type: section
+  #         text:
+  #           text: "¿A qué hora?"
+  #           type: mrkdwn
+  #         accessory:
+  #           type: timepicker
+  #           placeholder:
+  #             type: plain_text
+  #             text: Select a time
 
 session_config:
   session_expiration_time: 60
