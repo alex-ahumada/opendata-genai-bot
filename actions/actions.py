@@ -58,12 +58,12 @@ class ActionFetchData(Action):
         url = "http://datos.cadiz.local.ddev.site/api/1/datastore/query/fae52fed-1e83-48c0-8b75-304ae43d758d/1?count=true&results=true&schema=true&keys=true&format=json"
         payload = {}
         headers = {}
-        response = requests.request("GET", url, headers=headers, data=payload)
+        # response = requests.request("GET", url, headers=headers, data=payload)
         # print(response.text)
 
         # Send message as json
         # dispatcher.utter_message(text=response.text)
-        dispatcher.utter_message(json_message=response.json())
+        # dispatcher.utter_message(json_message=response.json())
 
         # Create image
         plt.plot([1, 2, 3], [1, 4, 9])
