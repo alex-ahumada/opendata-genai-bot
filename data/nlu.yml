@@ -1,91 +1,177 @@
 version: "3.1"
 
 nlu:
-- intent: greet
-  examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+  - regex: date
+    examples: |
+      - \d{2}/\d{2}/\d{4}
+      - \d{2}/{enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre}/\d{4}
 
-- intent: goodbye
-  examples: |
-    - cu
-    - good by
-    - cee you later
-    - good night
-    - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
+  - regex: time
+    examples: |
+      - \d{2}:\d{2}
+      - \d{2}:\d{2}:\d{2}
 
-- intent: affirm
-  examples: |
-    - yes
-    - y
-    - indeed
-    - of course
-    - that sounds good
-    - correct
+  - synonym: concierto
+    examples: |
+      - evento musical
+      - musica en directo
 
-- intent: deny
-  examples: |
-    - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
+  - lookup: day
+    examples: |
+      - lunes
+      - martes
+      - miércoles
+      - jueves
+      - viernes
+      - sábado
+      - domingo
 
-- intent: mood_great
-  examples: |
-    - perfect
-    - great
-    - amazing
-    - feeling like a king
-    - wonderful
-    - I am feeling very good
-    - I am great
-    - I am amazing
-    - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
+  - lookup: month
+    examples: |
+      - enero
+      - febrero
+      - marzo
+      - abril
+      - mayo
+      - junio
+      - julio
+      - agosto
+      - septiembre
+      - octubre
+      - noviembre
+      - diciembre
 
-- intent: mood_unhappy
-  examples: |
-    - my day was horrible
-    - I am sad
-    - I don't feel very well
-    - I am disappointed
-    - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
+  - intent: greet
+    examples: |
+      - hey
+      - hello
+      - hi
+      - hello there
+      - good morning
+      - good evening
+      - hola, soy [Juan](username)
+      - hola, me llamo [Rocío](username)
+      - hola, mi nombre es [Juan](username)
+      - hey there
+      - let's go
+      - hey dude
+      - goodmorning
+      - goodevening
+      - good afternoon
 
-- intent: bot_challenge
-  examples: |
-    - are you a bot?
-    - are you a human?
-    - am I talking to a bot?
-    - am I talking to a human?
+  - intent: goodbye
+    examples: |
+      - cu
+      - good by
+      - cee you later
+      - good night
+      - bye
+      - goodbye
+      - have a nice day
+      - see you around
+      - bye bye
+      - see you later
+
+  - intent: affirm
+    examples: |
+      - si
+      - s
+      - correcto
+      - claro
+      - claro que si
+      - por supuesto
+      - exacto
+      - si, por favor
+      - si, gracias
+      - si, claro
+      - si, por favor hazlo
+
+  - intent: deny
+    examples: |
+      - no
+      - n
+      - nunca
+      - jamas
+      - nope
+      - no lo creo
+      - así no
+      - no, gracias
+      - no quiero
+      - no quiero eso
+      - no, gracias de todos modos
+      - no, gracias de todas formas
+      - de ninguna manera
+      - no realmente
+      - no exactamente
+
+  # rasa intent to extract event entities
+  - intent: search_event
+    examples: |
+      - Quiero ir a [the movies](event)
+      - Quiero ir a [the theatre](event)
+      - Quiero ir a [the opera](event)
+      - Quiero ir a [the ballet](event)
+      - Quiero ir a un [concierto](event_type) el [viernes](date) [por la mañana](time)
+      - Me gustaría ir a un [concierto](event_type) el [viernes](date) [a las 12:00](time)
+      - Quiero ir a un [concierto](event_type) el [15/08/2023](date) [a las 16:00](time)
+      - Quiero ir a un [evento musical]{"entity": "event_type", "value": "concierto"}
+      - Quiero ir a un [museo](event_type) el [15 de agosto de 2023](date) [por la tarde](time)
+      - Quiero ir a [the exhibition](event)
+      - Quiero ir a [the gallery](event)
+      - Quiero ir a [the festival](event)
+
+  - intent: contact_info
+    examples: |
+      - Necesitaría el [número de teléfono](contact_info) de la [Delegación de Medio Ambiente](place)
+      - Quiero el [correo electrónico](contact_info) de la [Delegación de Juventud](place)
+
+  - intent: mood_great
+    examples: |
+      - perfect
+      - great
+      - amazing
+      - feeling like a king
+      - wonderful
+      - I am feeling very good
+      - I am great
+      - I am happy
+      - I am amazing
+      - I am going to save the world
+      - super stoked
+      - extremely good
+      - so so perfect
+      - so good
+      - so perfect
+
+  - intent: mood_unhappy
+    examples: |
+      - my day was horrible
+      - I am sad
+      - I don't feel very well
+      - I am disappointed
+      - super sad
+      - I'm so sad
+      - sad
+      - very sad
+      - unhappy
+      - not good
+      - not very good
+      - extremly sad
+      - so saad
+      - so sad
+
+  - intent: bot_challenge
+    examples: |
+      - ¿Eres un bot?
+      - ¿Eres un humano?
+      - ¿Eres un robot?
+      - ¿Eres un humano o un bot?
+      - ¿Eres un bot o un humano?
+      - ¿Estoy hablando con un bot?
+      - ¿Estoy hablando con un humano?
+
+  - intent: fetch_data
+    examples: |
+      - Quiero nuevos datos
+      - Dame datos
+      - Portal de Datos Abiertos
