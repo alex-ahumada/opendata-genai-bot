@@ -148,7 +148,7 @@ class ActionPlotData(Action):
             ContentType="image/png",
             Bucket=os.getenv("S3_BUCKET_NAME"),
             Key=f"{conversation_id}.png",
-            # Expires=datetime.datetime.now() + datetime.timedelta,
+            Expires=datetime.datetime.now() + datetime.timedelta(days=1),
         )
 
         # Get a presigned url to avoid public access
