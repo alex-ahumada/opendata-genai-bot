@@ -13,13 +13,15 @@ intents:
   - mood_unhappy
   - bot_challenge
   - fetch_data
-  - show_plot
+  - plot_data
+  - explain_data
 
 entities:
   - username
   - event_type
   - venue
   - date
+  - question_about_data
 
 slots:
   username:
@@ -40,6 +42,20 @@ slots:
     influence_conversation: true
     mappings:
       - type: custom
+  data:
+    type: any
+    influence_conversation: false
+    mappings:
+      - type: custom
+        action: action_fetch_data
+
+  data_question:
+    type: any
+    influence_conversation: false
+    mappings:
+      - type: from_entity
+        entity:
+        intent: question_about_data
 
       # - type: from_entity
       # - type: from_text
@@ -79,7 +95,7 @@ responses:
 
 actions:
   - action_fetch_data
-  - action_show_plot
+  - action_plot_data
   - action_explain_data
 
   # utter_event_time:

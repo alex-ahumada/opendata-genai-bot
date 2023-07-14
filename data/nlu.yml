@@ -74,6 +74,7 @@ nlu:
 
   - intent: affirm
     examples: |
+      - yes
       - si
       - s
       - correcto
@@ -175,3 +176,16 @@ nlu:
       - Quiero nuevos datos
       - Dame datos
       - Portal de Datos Abiertos
+
+  - intent: plot_data
+    examples: |
+      - Quiero ver un gráfico
+      - Dame un gráfico
+      - Muéstrame un gráfico
+
+  - intent: explain_data
+    examples: |
+      - Explícame los datos
+      - No entiendo los datos
+      - ¿Qué significan esos datos?
+      - ¿Podrías ampliar los datos?
