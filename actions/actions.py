@@ -33,6 +33,7 @@ import requests
 import openai
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from typing import Any, Text, Dict, List
 from dotenv import load_dotenv
 from matplotlib import pyplot as plt
@@ -96,6 +97,19 @@ class ActionFetchData(Action):
         return [SlotSet("data", response.json())]
 
 
+class ActionDownloadData(Action):
+    def name(self) -> Text:
+        return "action_download_data"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        return []
+
+
 class ActionPlotData(Action):
     def name(self) -> Text:
         return "action_plot_data"
@@ -121,59 +135,68 @@ class ActionPlotData(Action):
         # Create S3 client
         # boto3 currently has a bug with regions launched after 2019
         # this is fixed by setting the endpoint_url
-        s3_client = boto3.client(
-            "s3",
-            region_name=os.getenv("AWS_REGION"),
-            endpoint_url=f"https://s3.{os.getenv('AWS_REGION')}.amazonaws.com",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        )
+        # https://github.com/boto/boto3/issues/2864
+        try:
+            s3_client = boto3.client(
+                "s3",
+                region_name=os.getenv("AWS_REGION"),
+                endpoint_url=f"https://s3.{os.getenv('AWS_REGION')}.amazonaws.com",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            )
+        except ClientError as ce:
+            print("error", ce)
+        finally:
+            try:
+                # Save image to S3
+                # We use boto3 instead of boto3.resource because the latter
+                # does not support presigned urls
+                # s3 = boto3.resource(
+                #     "s3",
+                #     aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
+                #     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                # )
+                # bucket = s3.Bucket(os.getenv("S3_BUCKET_NAME"))
+                # bucket.put_object(
+                #     Body=img_data,
+                #     ContentType="image/png",
+                #     Key=f"{conversation_id}.png",
+                #     Expires=datetime.datetime.now() + datetime.timedelta(days=1),
+                # )
+                s3_client.put_object(
+                    Body=img_data,
+                    ContentType="image/png",
+                    Bucket=os.getenv("S3_BUCKET_NAME"),
+                    Key=f"{conversation_id}.png",
+                    Expires=datetime.datetime.now() + datetime.timedelta(days=1),
+                )
 
-        # Save image to S3
-        # s3 = boto3.resource(
-        #     "s3",
-        #     aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
-        #     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        # )
-        # bucket = s3.Bucket(os.getenv("S3_BUCKET_NAME"))
-        # bucket.put_object(
-        #     Body=img_data,
-        #     ContentType="image/png",
-        #     Key=f"{conversation_id}.png",
-        #     Expires=datetime.datetime.now() + datetime.timedelta(days=1),
-        # )
+                # Get a presigned url to avoid public access
+                presigned_image_url = s3_client.generate_presigned_url(
+                    "get_object",
+                    ExpiresIn=3600,
+                    Params={
+                        "Bucket": f"{os.getenv('S3_BUCKET_NAME')}",
+                        "Key": f"{conversation_id}.png",
+                    },
+                )
+            except ClientError as ce:
+                print("error", ce)
+            finally:
+                s3_client.close()
+                # Send image
+                dispatcher.utter_message(
+                    image=presigned_image_url,
+                )
 
-        s3_client.put_object(
-            Body=img_data,
-            ContentType="image/png",
-            Bucket=os.getenv("S3_BUCKET_NAME"),
-            Key=f"{conversation_id}.png",
-            Expires=datetime.datetime.now() + datetime.timedelta(days=1),
-        )
-
-        # Get a presigned url to avoid public access
-        presigned_image_url = s3_client.generate_presigned_url(
-            "get_object",
-            ExpiresIn=3600,
-            Params={
-                "Bucket": f"{os.getenv('S3_BUCKET_NAME')}",
-                "Key": f"{conversation_id}.png",
-            },
-        )
-
-        # Send image
-        dispatcher.utter_message(
-            image=presigned_image_url,
-        )
-
-        # Ask if user wants to see a plot
-        dispatcher.utter_button_message(
-            text="¿Quieres que explique los datos?",
-            buttons=[
-                {"title": "Sí", "payload": "Explícame los datos"},
-                {"title": "No", "payload": "/no"},
-            ],
-        )
+                # Ask if user wants to see a plot
+                dispatcher.utter_button_message(
+                    text="¿Quieres que explique los datos?",
+                    buttons=[
+                        {"title": "Sí", "payload": "Explícame los datos"},
+                        {"title": "No", "payload": "/no"},
+                    ],
+                )
 
         return []
 
