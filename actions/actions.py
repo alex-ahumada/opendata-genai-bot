@@ -30,6 +30,7 @@ import os
 import io
 import datetime
 import requests
+import pandas as pd
 import openai
 import boto3
 from botocore.config import Config
@@ -76,13 +77,15 @@ class ActionFetchData(Action):
         # Get conversation id
         conversation_id = tracker.sender_id
         # Fetch dataset datastore
-        url = f"{os.getenv('DKAN_API')}/datastore/query/fae52fed-1e83-48c0-8b75-304ae43d758d/1?count=true&results=true&schema=true&keys=true&format=json"
+        url = f"{os.getenv('DKAN_API')}/datastore/query/8b461860-8b00-434c-ae7b-6df303907f52/0?count=true&results=true&schema=true&keys=true&format=json"
         payload = {}
         headers = {}
         response = requests.request("GET", url, headers=headers, data=payload)
 
         # Send message as json
-        dispatcher.utter_message(text=response.text)
+        dispatcher.utter_message(
+            text=f"Los datos tienen {response.json()['count']} filas."
+        )
         # dispatcher.utter_message(json_message=response.json())
 
         # Ask if user wants to see a plot
@@ -127,16 +130,38 @@ class ActionPlotData(Action):
         print(data)
 
         # Create image
-        plt.plot([1, 2, 3], [1, 4, 9])
+        df = pd.json_normalize(data, record_path=["results"])
+        print(df)
+
+        for property in data["query"]["properties"]:
+            # skip first property
+            if property == data["query"]["properties"][0]:
+                continue
+            # remove unwanted properties
+            if property == "total" or property == "totales":
+                continue
+
+            print(property)
+            df[property] = pd.to_numeric(df[property], errors="coerce")
+            plt.plot(df[data["query"]["properties"][0]], df[property])
+
         img_data = io.BytesIO()
         plt.savefig(img_data, format="png")
         img_data.seek(0)
 
         # Create S3 client
         # boto3 currently has a bug with regions launched after 2019
-        # this is fixed by setting the endpoint_url
+        # this is fixed by setting the endpoint_url in boto3.client
         # https://github.com/boto/boto3/issues/2864
         try:
+            # We use boto3.client instead of boto3.resource because the bug
+            # is not fixed in boto3.resource
+            # s3 = boto3.resource(
+            #     "s3",
+            #     aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
+            #     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            # )
+            # bucket = s3.Bucket(os.getenv("S3_BUCKET_NAME"))
             s3_client = boto3.client(
                 "s3",
                 region_name=os.getenv("AWS_REGION"),
@@ -149,14 +174,6 @@ class ActionPlotData(Action):
         finally:
             try:
                 # Save image to S3
-                # We use boto3 instead of boto3.resource because the latter
-                # does not support presigned urls
-                # s3 = boto3.resource(
-                #     "s3",
-                #     aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
-                #     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                # )
-                # bucket = s3.Bucket(os.getenv("S3_BUCKET_NAME"))
                 # bucket.put_object(
                 #     Body=img_data,
                 #     ContentType="image/png",
@@ -172,13 +189,21 @@ class ActionPlotData(Action):
                 )
 
                 # Get a presigned url to avoid public access
+                # presigned_image_url = s3.meta.client.generate_presigned_url(
+                #     "get_object",
+                #     Params={
+                #         "Bucket": f"{os.getenv('S3_BUCKET_NAME')}",
+                #         "Key": f"{conversation_id}.png",
+                #     },
+                #     ExpiresIn=3600,
+                # )
                 presigned_image_url = s3_client.generate_presigned_url(
                     "get_object",
-                    ExpiresIn=3600,
                     Params={
                         "Bucket": f"{os.getenv('S3_BUCKET_NAME')}",
                         "Key": f"{conversation_id}.png",
                     },
+                    ExpiresIn=3600,
                 )
             except ClientError as ce:
                 print("error", ce)
