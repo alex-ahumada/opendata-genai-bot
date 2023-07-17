@@ -28,9 +28,11 @@
 
 import os
 import io
+import urllib.parse
 import datetime
 import requests
 import pandas as pd
+import numpy as np
 import openai
 import boto3
 from botocore.config import Config
@@ -38,6 +40,7 @@ from botocore.exceptions import ClientError
 from typing import Any, Text, Dict, List
 from dotenv import load_dotenv
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.events import SlotSet
@@ -48,6 +51,8 @@ load_dotenv()
 my_config = Config(
     region_name=os.getenv("AWS_REGION"),
 )
+
+aggregate_titles = ["total", "totales"]
 
 
 def get_completion(prompt, model="gpt-3.5-turbo"):
@@ -76,16 +81,51 @@ class ActionFetchData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
-        # Fetch dataset datastore
-        url = f"{os.getenv('DKAN_API')}/datastore/query/8b461860-8b00-434c-ae7b-6df303907f52/0?count=true&results=true&schema=true&keys=true&format=json"
+
+        # Search dataset with search terms
+        search_terms = tracker.get_slot("data_search_terms")
+        print(search_terms)
+        url_search = f"{os.getenv('DKAN_API')}/search?fulltext={urllib.parse.quote(search_terms)}&page=1&page-size=20"
+        print(url_search)
         payload = {}
         headers = {}
-        response = requests.request("GET", url, headers=headers, data=payload)
+        response_search = requests.request(
+            "GET", url_search, headers=headers, data=payload
+        )
+        response_search_json = response_search.json()
+        print(response_search_json)
+
+        dataset_keys = list(response_search_json["results"].keys())
+        dataset_id = response_search_json["results"][dataset_keys[0]]["identifier"]
+        print(dataset_id)
+
+        datastore_index = 0
+        dataset_distributions = response_search_json["results"][dataset_keys[0]][
+            "distribution"
+        ]
+        print(dataset_distributions)
+
+        # Find datastore index with csv format
+        for idx, item in enumerate(dataset_distributions):
+            if item["format"] == "csv":
+                datastore_index = idx
+
+        print(datastore_index)
+
+        # Fetch dataset metadata
+        url_meta = (
+            f"{os.getenv('DKAN_API')}/metastore/schemas/dataset/items/{dataset_id}"
+        )
+        response_meta = requests.request("GET", url_meta, headers=headers, data=payload)
+
+        # Fetch dataset datastore
+        url_datastore = f"{os.getenv('DKAN_API')}/datastore/query/{dataset_id}/{datastore_index}?count=true&results=true&schema=true&keys=true&format=json"
+        response_datastore = requests.request(
+            "GET", url_datastore, headers=headers, data=payload
+        )
 
         # Send message as json
-        dispatcher.utter_message(
-            text=f"Los datos tienen {response.json()['count']} filas."
-        )
+        dispatcher.utter_message(text=f"El dataset {dataset_id} han sido encontrados.")
         # dispatcher.utter_message(json_message=response.json())
 
         # Ask if user wants to see a plot
@@ -97,7 +137,10 @@ class ActionFetchData(Action):
             ],
         )
 
-        return [SlotSet("data", response.json())]
+        return [
+            SlotSet("data", response_datastore.json()),
+            SlotSet("data_meta", response_meta.json()),
+        ]
 
 
 class ActionDownloadData(Action):
@@ -127,26 +170,57 @@ class ActionPlotData(Action):
         conversation_id = tracker.sender_id
 
         data = tracker.get_slot("data")
-        print(data)
+        data_meta = tracker.get_slot("data_meta")
+        # print(data)
+        print(data_meta)
 
         # Create image
         df = pd.json_normalize(data, record_path=["results"])
-        print(df)
+        # Transform suitable data to numeric or keep as string
+        df = df.apply(pd.to_numeric, errors="coerce").fillna(df)
+        # df = pd.read_csv(
+        #     "https://datos.cadiz.local.ddev.site/sites/default/files/uploaded_resources/residuos-recogidos-por-servicios-municipales-v1.0.0.xlsx",
+        #     # "actions/data/residuos-recogidos-por-servicios-municipales-v1.1.2.csv",
+        #     # encoding="utf-8", encoding_errors="ignore",
+        #     delimiter=",",
+        #     # encoding="unicode_escape",
+        # )
+        # print("CSV loaded")
+        # print(df)
+        # print(df.shape)
+        # print(df.info())
+
+        plt.style.use("seaborn")
+        plt.figure(figsize=(10, 5))
+        # plt.title(data["query"]["resources"][0]["id"])
+        plt.title(data_meta["title"])
+        plt.xlabel(data["query"]["properties"][0])
 
         for property in data["query"]["properties"]:
             # skip first property
             if property == data["query"]["properties"][0]:
                 continue
             # remove unwanted properties
-            if property == "total" or property == "totales":
+            if property in aggregate_titles:
                 continue
 
             print(property)
-            df[property] = pd.to_numeric(df[property], errors="coerce")
-            plt.plot(df[data["query"]["properties"][0]], df[property])
+            # df[property] = pd.to_numeric(df[property], errors="coerce")
+            if pd.api.types.is_numeric_dtype(df[property]):
+                plt.plot(
+                    df[data["query"]["properties"][0]],
+                    df[property],
+                    marker=".",
+                    markersize=10,
+                    label=data["schema"][data["query"]["resources"][0]["id"]]["fields"][
+                        property
+                    ]["description"],
+                )
+        plt.legend(loc=(1.02, 0), borderaxespad=0, fontsize=12)
+        plt.tight_layout()
 
         img_data = io.BytesIO()
-        plt.savefig(img_data, format="png")
+        plt.savefig(img_data, format="png", dpi=72)
         img_data.seek(0)
 
         # Create S3 client
@@ -250,9 +324,9 @@ class ActionExplainData(Action):
         ```{data}```
         """
 
-        response = get_completion(prompt)
-        print(response)
-        dispatcher.utter_message(text=response)
+        # response = get_completion(prompt)
+        # print(response)
+        # dispatcher.utter_message(text=response)
 
         return []
 
