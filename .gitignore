@@ -3,6 +3,10 @@
 .rasa/cache
 models
 .env
-.env.*
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.local
 credentials.yml
 results/
