@@ -8,5 +8,7 @@ models
 .env.production
 .env.production.local
 .env.local
+.env.test
+.env.test.local
 credentials.yml
 results/
