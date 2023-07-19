@@ -1,46 +1,63 @@
 version: "3.1"
 
 stories:
-  - story: happy path
-    steps:
-      - intent: greet
-      - action: utter_greet
-      - intent: mood_great
-      - action: utter_happy
+  # - story: happy path
+  #   steps:
+  #     - intent: greet
+  #     - action: utter_greet
+  #     - intent: mood_great
+  #     - action: utter_happy
 
-  - story: sad path 1
-    steps:
-      - intent: greet
-      - action: utter_greet
-      - intent: mood_unhappy
-      - action: utter_cheer_up
-      - action: utter_did_that_help
-      - intent: affirm
-      - action: utter_happy
+  # - story: sad path 1
+  #   steps:
+  #     - intent: greet
+  #     - action: utter_greet
+  #     - intent: mood_unhappy
+  #     - action: utter_cheer_up
+  #     - action: utter_did_that_help
+  #     - intent: affirm
+  #     - action: utter_happy
 
-  - story: sad path 2
+  # - story: sad path 2
+  #   steps:
+  #     - intent: greet
+  #     - action: utter_greet
+  #     - intent: mood_unhappy
+  #     - action: utter_cheer_up
+  #     - action: utter_did_that_help
+  #     - intent: deny
+  #     - action: utter_goodbye
+
+  - story: Datos con descarga
     steps:
-      - intent: greet
-      - action: utter_greet
-      - intent: mood_unhappy
-      - action: utter_cheer_up
-      - action: utter_did_that_help
+      - intent: fetch_data
+      - action: action_fetch_data
+      - action: utter_dataset_menu
+      - intent: download_data
+      - action: action_download_data
+      - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye
 
-  - story: Datos con grafico
+  - story: Datos con grafico y explicacion
     steps:
       - intent: fetch_data
       - action: action_fetch_data
+      - action: utter_dataset_menu
       - intent: plot_data
       - action: action_plot_data
+      - action: utter_dataset_menu
       - intent: explain_data
       - action: action_explain_data
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
 
-  - story: Datos sin grafico
+  - story: Datos sin acciones
     steps:
       - intent: fetch_data
       - action: action_fetch_data
+      - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye
 
@@ -48,7 +65,9 @@ stories:
     steps:
       - intent: fetch_data
       - action: action_fetch_data
+      - action: utter_dataset_menu
       - intent: plot_data
       - action: action_plot_data
+      - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye

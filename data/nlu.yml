@@ -41,6 +41,13 @@ nlu:
       - noviembre
       - diciembre
 
+  - lookup: file_format
+    examples: |
+      - CSV
+      - XLS
+      - XLSX
+      - JSON
+
   - intent: greet
     examples: |
       - hey
@@ -74,6 +81,7 @@ nlu:
 
   - intent: affirm
     examples: |
+      - /affirm
       - yes
       - si
       - s
@@ -89,6 +97,7 @@ nlu:
 
   - intent: deny
     examples: |
+      - /deny
       - no
       - n
       - nunca
@@ -105,61 +114,61 @@ nlu:
       - no realmente
       - no exactamente
 
-  # rasa intent to extract event entities
-  - intent: search_event
-    examples: |
-      - Quiero ir a [the movies](event)
-      - Quiero ir a [the theatre](event)
-      - Quiero ir a [the opera](event)
-      - Quiero ir a [the ballet](event)
-      - Quiero ir a un [concierto](event_type) el [viernes](date) [por la mañana](time)
-      - Me gustaría ir a un [concierto](event_type) el [viernes](date) [a las 12:00](time)
-      - Quiero ir a un [concierto](event_type) el [15/08/2023](date) [a las 16:00](time)
-      - Quiero ir a un [evento musical]{"entity": "event_type", "value": "concierto"}
-      - Quiero ir a un [museo](event_type) el [15 de agosto de 2023](date) [por la tarde](time)
-      - Quiero ir a [the exhibition](event)
-      - Quiero ir a [the gallery](event)
-      - Quiero ir a [the festival](event)
+  # # rasa intent to extract event entities
+  # - intent: search_event
+  #   examples: |
+  #     - Quiero ir a [the movies](event)
+  #     - Quiero ir a [the theatre](event)
+  #     - Quiero ir a [the opera](event)
+  #     - Quiero ir a [the ballet](event)
+  #     - Quiero ir a un [concierto](event_type) el [viernes](date) [por la mañana](time)
+  #     - Me gustaría ir a un [concierto](event_type) el [viernes](date) [a las 12:00](time)
+  #     - Quiero ir a un [concierto](event_type) el [15/08/2023](date) [a las 16:00](time)
+  #     - Quiero ir a un [evento musical]{"entity": "event_type", "value": "concierto"}
+  #     - Quiero ir a un [museo](event_type) el [15 de agosto de 2023](date) [por la tarde](time)
+  #     - Quiero ir a [the exhibition](event)
+  #     - Quiero ir a [the gallery](event)
+  #     - Quiero ir a [the festival](event)
 
-  - intent: contact_info
-    examples: |
-      - Necesitaría el [número de teléfono](contact_info) de la [Delegación de Medio Ambiente](place)
-      - Quiero el [correo electrónico](contact_info) de la [Delegación de Juventud](place)
+  # - intent: contact_info
+  #   examples: |
+  #     - Necesitaría el [número de teléfono](contact_info) de la [Delegación de Medio Ambiente](place)
+  #     - Quiero el [correo electrónico](contact_info) de la [Delegación de Juventud](place)
 
-  - intent: mood_great
-    examples: |
-      - perfect
-      - great
-      - amazing
-      - feeling like a king
-      - wonderful
-      - I am feeling very good
-      - I am great
-      - I am happy
-      - I am amazing
-      - I am going to save the world
-      - super stoked
-      - extremely good
-      - so so perfect
-      - so good
-      - so perfect
+  # - intent: mood_great
+  #   examples: |
+  #     - perfect
+  #     - great
+  #     - amazing
+  #     - feeling like a king
+  #     - wonderful
+  #     - I am feeling very good
+  #     - I am great
+  #     - I am happy
+  #     - I am amazing
+  #     - I am going to save the world
+  #     - super stoked
+  #     - extremely good
+  #     - so so perfect
+  #     - so good
+  #     - so perfect
 
-  - intent: mood_unhappy
-    examples: |
-      - my day was horrible
-      - I am sad
-      - I don't feel very well
-      - I am disappointed
-      - super sad
-      - I'm so sad
-      - sad
-      - very sad
-      - unhappy
-      - not good
-      - not very good
-      - extremly sad
-      - so saad
-      - so sad
+  # - intent: mood_unhappy
+  #   examples: |
+  #     - my day was horrible
+  #     - I am sad
+  #     - I don't feel very well
+  #     - I am disappointed
+  #     - super sad
+  #     - I'm so sad
+  #     - sad
+  #     - very sad
+  #     - unhappy
+  #     - not good
+  #     - not very good
+  #     - extremly sad
+  #     - so saad
+  #     - so sad
 
   - intent: bot_challenge
     examples: |
@@ -173,19 +182,29 @@ nlu:
 
   - intent: fetch_data
     examples: |
-      - Quiero nuevos datos
-      - Dame datos
-      - Portal de Datos Abiertos
+      - Quiero datos sobre [residuos urbanos](search_terms)
+      - Quiero datos sobre [deuda](search_terms)
+      - Dame datos sobre el [consumo de agua](search_terms)
+      - Necesito datos sobre [el paro](search_terms)
+      - ¿Tienes datos sobre [deuda viva](search_terms)?
 
   - intent: plot_data
     examples: |
+      - /plot_data
       - Quiero ver un gráfico
       - Dame un gráfico
       - Muéstrame un gráfico
 
   - intent: explain_data
     examples: |
+      - /explain_data
       - Explícame los datos
       - No entiendo los datos
       - ¿Qué significan esos datos?
       - ¿Podrías ampliar los datos?
+
+  - intent: download_data
+    examples: |
+      - /download_data
+      - Descargar datos en [CSV](file_format)
+      - Descargar datos en [XLS](file_format)
