@@ -84,33 +84,33 @@ class ActionFetchData(Action):
 
         # Search dataset with search terms
         search_terms = tracker.get_slot("data_search_terms")
-        print(search_terms)
+        # print(search_terms)
         url_search = f"{os.getenv('DKAN_API')}/search?fulltext={urllib.parse.quote(search_terms)}&page=1&page-size=20"
-        print(url_search)
+        # print(url_search)
         payload = {}
         headers = {}
         response_search = requests.request(
             "GET", url_search, headers=headers, data=payload
         )
         response_search_json = response_search.json()
-        print(response_search_json)
+        # print(response_search_json)
 
         dataset_keys = list(response_search_json["results"].keys())
         dataset_id = response_search_json["results"][dataset_keys[0]]["identifier"]
-        print(dataset_id)
+        # print(dataset_id)
 
         datastore_index = 0
         dataset_distributions = response_search_json["results"][dataset_keys[0]][
             "distribution"
         ]
-        print(dataset_distributions)
+        # print(dataset_distributions)
 
         # Find datastore index with csv format
         for idx, item in enumerate(dataset_distributions):
             if item["format"] == "csv":
                 datastore_index = idx
 
-        print(datastore_index)
+        # print("Datastore index:", datastore_index)
 
         # Fetch dataset metadata
         url_meta = (
@@ -129,13 +129,13 @@ class ActionFetchData(Action):
         # dispatcher.utter_message(json_message=response.json())
 
         # Ask if user wants to see a plot
-        dispatcher.utter_button_message(
-            text="¿Quieres ver un gráfico?",
-            buttons=[
-                {"title": "Sí", "payload": "Quiero ver un gráfico"},
-                {"title": "No", "payload": "/no"},
-            ],
-        )
+        # dispatcher.utter_button_message(
+        #     text="¿Quieres ver un gráfico?",
+        #     buttons=[
+        #         {"title": "Sí", "payload": "Quiero ver un gráfico"},
+        #         {"title": "No", "payload": "/no"},
+        #     ],
+        # )
 
         return [
             SlotSet("data", response_datastore.json()),
@@ -169,10 +169,12 @@ class ActionPlotData(Action):
         # Get conversation id
         conversation_id = tracker.sender_id
 
+        dispatcher.utter_message(text="Generando gráfico...")
+
         data = tracker.get_slot("data")
         data_meta = tracker.get_slot("data_meta")
         # print(data)
-        print(data_meta)
+        # print(data_meta)
 
         # Create image
         df = pd.json_normalize(data, record_path=["results"])
@@ -204,7 +206,7 @@ class ActionPlotData(Action):
             if property in aggregate_titles:
                 continue
 
-            print(property)
+            # print(property)
             # df[property] = pd.to_numeric(df[property], errors="coerce")
             if pd.api.types.is_numeric_dtype(df[property]):
                 plt.plot(
@@ -288,14 +290,14 @@ class ActionPlotData(Action):
                     image=presigned_image_url,
                 )
 
-                # Ask if user wants to see a plot
-                dispatcher.utter_button_message(
-                    text="¿Quieres que explique los datos?",
-                    buttons=[
-                        {"title": "Sí", "payload": "Explícame los datos"},
-                        {"title": "No", "payload": "/no"},
-                    ],
-                )
+                # # Ask if user wants to see a plot
+                # dispatcher.utter_button_message(
+                #     text="¿Quieres que explique los datos?",
+                #     buttons=[
+                #         {"title": "Sí", "payload": "Explícame los datos"},
+                #         {"title": "No", "payload": "/no"},
+                #     ],
+                # )
 
         return []
 
@@ -314,7 +316,6 @@ class ActionExplainData(Action):
         conversation_id = tracker.sender_id
 
         # Set OpenAI API key
-        print(os.getenv("OPENAI_API_KEY"))
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
         data = tracker.get_slot("data")
@@ -327,6 +328,7 @@ class ActionExplainData(Action):
         # response = get_completion(prompt)
         # print(response)
         # dispatcher.utter_message(text=response)
+        dispatcher.utter_message(text="ChatGPT en modo debug (code: 001).")
 
         return []
 
@@ -345,7 +347,6 @@ class ActionStatisticsData(Action):
         conversation_id = tracker.sender_id
 
         # Set OpenAI API key
-        print(os.getenv("OPENAI_API_KEY"))
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
         data = tracker.get_slot("data")
@@ -358,8 +359,56 @@ class ActionStatisticsData(Action):
         ```{data}```
         """
 
-        response = get_completion(prompt)
-        print(response)
-        dispatcher.utter_message(text=response)
+        # response = get_completion(prompt)
+        # print(response)
+        # dispatcher.utter_message(text=response)
+        dispatcher.utter_message(text="ChatGPT en modo debug (code: 002).")
+
+        return []
+
+
+class ActionDownloadData(Action):
+    def name(self) -> Text:
+        return "action_download_data"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        # theres a bug with rasa use of aiogram in utter_send_file for some file formats,
+        # pdf works ok but csv and xlsx don't, so we are using the telegram api directly
+        # aiogram.utils.exceptions.WrongFileIdentifier: Wrong file identifier/http url specified
+        # once the bug is fixed we can use the dispatcher.utter_message
+        # dispatcher.utter_message(response="utter_send_file", file_url=document_url)
+
+        conversation_id = tracker.sender_id
+
+        data_meta = tracker.get_slot("data_meta")
+
+        request_url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendDocument"
+        document_url = data_meta["distribution"][1]["downloadURL"]
+        filename = os.path.basename(document_url)
+        # TODO: setting verify to False disables SSL verification, which is necessary for our local setup with DDEV
+        # This should be removed in a final release
+        response_document = requests.get(document_url, verify=False)
+
+        if response_document.ok:
+            print("CSV file downloaded successfully.")
+        else:
+            print("Failed to download the CSV file.")
+
+        files = {
+            "document": (filename, response_document.content),
+        }
+        params = {"chat_id": conversation_id, "filename": filename}
+        response = requests.post(request_url, files=files, params=params)
+
+        if response.ok:
+            print("CSV file sent successfully.")
+        else:
+            print("Failed to send the CSV file.")
+            dispatcher.utter_message(text="Error enviando el archivo.")
 
         return []
