@@ -1,73 +1,145 @@
 version: "3.1"
 
 stories:
-  # - story: happy path
-  #   steps:
-  #     - intent: greet
-  #     - action: utter_greet
-  #     - intent: mood_great
-  #     - action: utter_happy
-
-  # - story: sad path 1
-  #   steps:
-  #     - intent: greet
-  #     - action: utter_greet
-  #     - intent: mood_unhappy
-  #     - action: utter_cheer_up
-  #     - action: utter_did_that_help
-  #     - intent: affirm
-  #     - action: utter_happy
-
-  # - story: sad path 2
-  #   steps:
-  #     - intent: greet
-  #     - action: utter_greet
-  #     - intent: mood_unhappy
-  #     - action: utter_cheer_up
-  #     - action: utter_did_that_help
-  #     - intent: deny
-  #     - action: utter_goodbye
-
-  - story: Datos con descarga
+  - story: User requests to search data
     steps:
-      - intent: fetch_data
-      - action: action_fetch_data
+      - intent: search_data
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_search_slots
+      - action: action_search_data
+      - action: utter_anything_else
       - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User requests to plot data
+    steps:
+      - intent: plot_data
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_plot_slots
+      - action: action_search_data
+      - action: action_plot_data
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User requests to download data
+    steps:
       - intent: download_data
+      # First form
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_search_data
+      # Second form
+      - action: data_file_format_form
+      - active_loop: data_file_format_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_download_slots
       - action: action_download_data
+      - action: utter_anything_else
       - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye
+      - action: action_empty_slots
 
-  - story: Datos con grafico y explicacion
+  - story: User requests to explain data
     steps:
-      - intent: fetch_data
-      - action: action_fetch_data
-      - action: utter_dataset_menu
-      - intent: plot_data
-      - action: action_plot_data
-      - action: utter_dataset_menu
       - intent: explain_data
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_explain_slots
+      - action: action_search_data
       - action: action_explain_data
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User requests to calculate statistics data
+    steps:
+      - intent: statistics_data
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_statistics_slots
+      - action: action_search_data
+      - action: action_statistics_data
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User doesn't want to continue request in search terms form
+    steps:
+      - or:
+          - intent: plot_data
+          - intent: download_data
+          - intent: explain_data
+          - intent: statistics_data
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - intent: stop
+      - action: utter_ask_restart
+      - or:
+          - intent: stop
+          - intent: affirm
+      - action: action_deactivate_loop
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_empty_slots
+      - action: utter_anything_else
       - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye
 
-  - story: Datos sin acciones
+  - story: User doesn't want to continue download in file format form
     steps:
-      - intent: fetch_data
-      - action: action_fetch_data
+      - intent: download_data
+      # First form
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      # Second form
+      - action: data_file_format_form
+      - active_loop: data_file_format_form
+      - intent: stop
+      - action: utter_ask_restart
+      - or:
+          - intent: stop
+          - intent: affirm
+      - action: action_deactivate_loop
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_empty_slots
+      - action: utter_anything_else
       - action: utter_dataset_menu
       - intent: deny
       - action: utter_goodbye
-
-  - story: Datos con grafico sin explicacion
-    steps:
-      - intent: fetch_data
-      - action: action_fetch_data
-      - action: utter_dataset_menu
-      - intent: plot_data
-      - action: action_plot_data
-      - action: utter_dataset_menu
-      - intent: deny
-      - action: utter_goodbye
+      - action: action_empty_slots

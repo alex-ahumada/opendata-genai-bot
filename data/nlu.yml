@@ -41,43 +41,49 @@ nlu:
       - noviembre
       - diciembre
 
-  - lookup: file_format
+  - lookup: data_file_format
     examples: |
-      - CSV
-      - XLS
-      - XLSX
-      - JSON
+      - csv
+      - xls
+      - xlsx
+      - json
+      - pdf
+
+  - intent: start_telegram
+    examples: |
+      - /start
 
   - intent: greet
     examples: |
       - hey
+      - ey
       - hello
       - hi
-      - hello there
-      - good morning
-      - good evening
+      - hola
+      - ¿qué tal?
+      - a las buenas
       - hola, soy [Juan](username)
       - hola, me llamo [Rocío](username)
-      - hola, mi nombre es [Juan](username)
-      - hey there
-      - let's go
-      - hey dude
-      - goodmorning
-      - goodevening
-      - good afternoon
+      - hola, mi nombre es [José](username)
+      - buenos días
+      - buenas tardes
+      - buenas noches
 
   - intent: goodbye
     examples: |
-      - cu
-      - good by
-      - cee you later
-      - good night
+      - adiós
+      - hasta luego
+      - que tengas un buen día
       - bye
-      - goodbye
-      - have a nice day
-      - see you around
       - bye bye
-      - see you later
+      - nos vemos
+      - nos vemos luego
+
+  - intent: thanks
+    examples: |
+      - gracias
+      - muchas gracias
+      - te lo agradezco
 
   - intent: affirm
     examples: |
@@ -114,61 +120,21 @@ nlu:
       - no realmente
       - no exactamente
 
-  # # rasa intent to extract event entities
-  # - intent: search_event
-  #   examples: |
-  #     - Quiero ir a [the movies](event)
-  #     - Quiero ir a [the theatre](event)
-  #     - Quiero ir a [the opera](event)
-  #     - Quiero ir a [the ballet](event)
-  #     - Quiero ir a un [concierto](event_type) el [viernes](date) [por la mañana](time)
-  #     - Me gustaría ir a un [concierto](event_type) el [viernes](date) [a las 12:00](time)
-  #     - Quiero ir a un [concierto](event_type) el [15/08/2023](date) [a las 16:00](time)
-  #     - Quiero ir a un [evento musical]{"entity": "event_type", "value": "concierto"}
-  #     - Quiero ir a un [museo](event_type) el [15 de agosto de 2023](date) [por la tarde](time)
-  #     - Quiero ir a [the exhibition](event)
-  #     - Quiero ir a [the gallery](event)
-  #     - Quiero ir a [the festival](event)
+  - intent: stop
+    examples: |
+      - /stop
+      - Para
+      - Para ya
+      - Me lo he pensado mejor
+      - No quiero continuar
+      - No quiero continuar con esto
+      - He cambiado de opinión
+      - Tengo otra idea
 
   # - intent: contact_info
   #   examples: |
   #     - Necesitaría el [número de teléfono](contact_info) de la [Delegación de Medio Ambiente](place)
   #     - Quiero el [correo electrónico](contact_info) de la [Delegación de Juventud](place)
-
-  # - intent: mood_great
-  #   examples: |
-  #     - perfect
-  #     - great
-  #     - amazing
-  #     - feeling like a king
-  #     - wonderful
-  #     - I am feeling very good
-  #     - I am great
-  #     - I am happy
-  #     - I am amazing
-  #     - I am going to save the world
-  #     - super stoked
-  #     - extremely good
-  #     - so so perfect
-  #     - so good
-  #     - so perfect
-
-  # - intent: mood_unhappy
-  #   examples: |
-  #     - my day was horrible
-  #     - I am sad
-  #     - I don't feel very well
-  #     - I am disappointed
-  #     - super sad
-  #     - I'm so sad
-  #     - sad
-  #     - very sad
-  #     - unhappy
-  #     - not good
-  #     - not very good
-  #     - extremly sad
-  #     - so saad
-  #     - so sad
 
   - intent: bot_challenge
     examples: |
@@ -180,31 +146,89 @@ nlu:
       - ¿Estoy hablando con un bot?
       - ¿Estoy hablando con un humano?
 
-  - intent: fetch_data
+  - intent: search_data
     examples: |
-      - Quiero datos sobre [residuos urbanos](search_terms)
-      - Quiero datos sobre [deuda](search_terms)
-      - Dame datos sobre el [consumo de agua](search_terms)
-      - Necesito datos sobre [el paro](search_terms)
-      - ¿Tienes datos sobre [deuda viva](search_terms)?
+      - Quiero datos sobre [residuos urbanos](data_search_terms)
+      - Quiero datos sobre [deuda](data_search_terms)
+      - Dame datos sobre el [consumo de agua](data_search_terms)
+      - Necesito datos sobre [desempleo](data_search_terms)
+      - Muestra información sobre [presupuestos](data_search_terms)
+      - ¿Tienes datos sobre [deuda viva](data_search_terms)?
 
   - intent: plot_data
     examples: |
       - /plot_data
+      - /plot_data [deuda viva](data_search_terms)
       - Quiero ver un gráfico
+      - Quiero ver un gráfico sobre [elecciones municipales](data_search_terms)
       - Dame un gráfico
+      - Dame un gráfico sobre [vivienda pública](data_search_terms)
       - Muéstrame un gráfico
+      - Muéstrame un gráfico sobre [presupuestos](data_search_terms)
+
+  - intent: download_data
+    examples: |
+      - /download_data
+      - /download_data [CSV](data_file_format)
+      - /download_data [CSV](data_file_format) [deuda viva](data_search_terms) 
+      - Descargar datos
+      - Descargar datos en [CSV](data_file_format)
+      - Descargar datos en [XLS](data_file_format)
+      - Descargar datos en [PDF](data_file_format) sobre [deuda viva](data_search_terms)
+      - Descargar datos sobre [presupuestos](data_search_terms) en [XLSX](data_file_format)
 
   - intent: explain_data
     examples: |
       - /explain_data
       - Explícame los datos
+      - Describe datos sobre [deuda viva](data_search_terms)
       - No entiendo los datos
       - ¿Qué significan esos datos?
       - ¿Podrías ampliar los datos?
+      - ¿Podrías explicar los datos?
+      - ¿Podrías explicarme los datos?
 
-  - intent: download_data
+  - intent: statistics_data
     examples: |
-      - /download_data
-      - Descargar datos en [CSV](file_format)
-      - Descargar datos en [XLS](file_format)
+      - /statistics_data
+      - Dame estadísticas
+      - Quiero estadísticas
+      - Muéstrame estadísticas
+      - Muéstrame estadísticas sobre [deuda viva](data_search_terms)
+      - ¿Qué datos estadísticos tienes?
+      - ¿Podrias calcular la media?
+      - ¿Puedes calcular la mediana?
+      - ¿Es posible calcular la moda?
+      - ¿Cuál es la desviación típica?
+      - ¿Cuál es la varianza?
+
+  - intent: inform
+    examples: |
+      - [deuda viva](data_search_terms)
+      - [presupuestos](data_search_terms)
+      - [vivienda pública](data_search_terms)
+      - [elecciones municipales](data_search_terms)
+      - [elecciones autonómicas](data_search_terms)
+      - [elecciones generales](data_search_terms)
+      - [elecciones europeas](data_search_terms)
+      - [elecciones](data_search_terms)
+      - [desempleo](data_search_terms)
+      - [paro](data_search_terms)
+      - [residuos urbanos](data_search_terms)
+      - [residuos](data_search_terms)
+      - [consumo de agua](data_search_terms)
+      - [agua](data_search_terms)
+      - [deuda](data_search_terms)
+      - [deuda pública](data_search_terms)
+      - [deuda privada](data_search_terms)
+      - [deuda externa](data_search_terms)
+      - [deuda interna](data_search_terms)
+      - [deuda nacional](data_search_terms)
+      - [deuda municipal](data_search_terms)
+      - [deuda autonómica](data_search_terms)
+      - [deuda estatal](data_search_terms)
+      - [deuda soberana](data_search_terms)
+      - [csv](data_file_format)
+      - [xlx](data_file_format)
+      - [xlsx](data_file_format)
+      - [pdf](data_file_format)

@@ -1,6 +1,11 @@
 version: "3.1"
 
 rules:
+  - rule: Telegram start command
+    steps:
+      - intent: start_telegram
+      - action: utter_welcome
+
   - rule: Say goodbye anytime the user says goodbye
     steps:
       - intent: goodbye
@@ -10,3 +15,93 @@ rules:
     steps:
       - intent: bot_challenge
       - action: utter_iamabot
+
+  - rule: Say 'you're welcome' anytime the user says thanks
+    steps:
+      - intent: thanks
+      - action: utter_you_are_welcome
+
+  # - rule: Activate Search form
+  #   steps:
+  #     - intent: search_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+
+  # - rule: Submit Search form
+  #   condition:
+  #     - active_loop: data_search_terms_form
+  #   steps:
+  #     - action: data_search_terms_form
+  #     - active_loop: null
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - action: utter_search_slots
+  #     - action: action_search_data
+
+  # - rule: Activate Plot form
+  #   steps:
+  #     - intent: plot_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+
+  # - rule: Submit Plot form
+  #   condition:
+  #     - active_loop: data_search_terms_form
+  #   steps:
+  #     - action: simple_plot_form
+  #     - active_loop: null
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - action: utter_submit_plot
+  #     - action: utter_plot_slots
+  #     - action: action_search_data
+  #     - action: action_plot_data
+
+  # - rule: Activate Download form
+  #   steps:
+  #     - intent: download_data
+  #     - action: simple_download_form
+  #     - active_loop: simple_download_form
+
+  # - rule: Submit Download form
+  #   condition:
+  #     - active_loop: simple_download_form
+  #   steps:
+  #     - action: simple_download_form
+  #     - active_loop: null
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - action: utter_submit_download
+  #     - action: utter_download_slots
+  #     - action: action_search_data
+  #     - action: action_download_data
+
+  # - rule: Activate Explain form
+  #   steps:
+  #     - intent: explain_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+
+  # - rule: Activate Statistics form
+  #   steps:
+  #     - intent: statistics_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+
+  - rule: Interruption in Search Terms form
+    condition:
+      - active_loop: data_search_terms_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+
+  - rule: Interruption in Download form
+    condition:
+      - active_loop: data_file_format_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_file_format_form
+      - active_loop: data_file_format_form

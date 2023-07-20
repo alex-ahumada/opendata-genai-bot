@@ -1,154 +1,170 @@
 version: "3.1"
 
 intents:
+  - start_telegram
   - how_to_get_started
   - greet
   - goodbye
+  - thanks
   - affirm
   - deny
-  - search_agenda
-  - search_event
+  - stop
   - contact_info
-  - mood_great
-  - mood_unhappy
   - bot_challenge
-  - fetch_data
+  - inform
+  - search_data
   - plot_data
   - explain_data
+  - statistics_data
   - download_data
+  - request_plot_form
+  - request_download_form
 
 entities:
   - username
-  - event_type
-  - venue
-  - date
-  - search_terms
-  - file_format
+  - data_search_terms
+  - data_file_format
 
 slots:
   username:
-    type: any
-    influence_conversation: false
+    type: text
+    influence_conversation: true
     mappings:
       - type: from_entity
         entity: username
-  venue:
-    type: text
-    influence_conversation: false
-    mappings:
-      - type: from_entity
-        entity: venue
-        intent: search_event
-  date:
+  data:
     type: text
     influence_conversation: true
     mappings:
       - type: custom
-  data:
-    type: any
-    influence_conversation: false
-    mappings:
-      - type: custom
-        action: action_fetch_data
+        action: action_search_data
   data_meta:
-    type: any
-    influence_conversation: false
+    type: text
+    influence_conversation: true
     mappings:
       - type: custom
-        action: action_fetch_data
+        action: action_search_data
   data_search_terms:
-    type: any
-    influence_conversation: false
+    type: text
+    influence_conversation: true
     mappings:
       - type: from_entity
-        entity: search_terms
-        intent: fetch_data
+        entity: data_search_terms
   data_file_format:
     type: text
-    influence_conversation: false
+    influence_conversation: true
     mappings:
       - type: from_entity
-        entity: file_format
-        intent: download_data
-  # file_url:
-  #   type: text
-  #   influence_conversation: false
-  #   mappings:
-  #     - type: custom
-  #       action: action_download_data
-
-  # - type: from_entity
-  # - type: from_text
-  # - type: from_intent
-  # - type: from_trigger_intent
-  # - type: custom
+        entity: data_file_format
 
 responses:
-  utter_greet:
-    - text: "¡Hey {username}! ¿Qué tal estás?"
-      buttons:
-        - title: "¡Genial!"
-          payload: "/mood_great"
-        - title: "No muy bien..."
-          payload: "/mood_unhappy"
-    - text: "¡Hola {name}! ¿Cómo va tu día?"
+  utter_welcome:
+    - text: "¡Hola! ¿En qué puedo ayudarte?"
       channel: "telegram"
-
-  utter_cheer_up:
-    - text: "Here is something to cheer you up:"
-      image: "https://i.imgur.com/nGF1K8f.jpg"
+  utter_greet:
+    - text: "¡Hola! ¿Qué tal estás?"
+    - text: "¡Hey! ¿Qué tal estás?"
+    - text: "¡Hey {username}! ¿Qué tal estás?"
+    - text: "¡Hola {name}! ¿Cómo va tu día?"
 
   utter_did_that_help:
     - text: "Did that help you?"
 
-  utter_happy:
-    - text: "Great, carry on!"
-
   utter_goodbye:
+    - text: "¡Hasta luego!"
+    - text: "¡Nos vemos!"
     - text: "Bye"
 
   utter_iamabot:
-    - text: "I am a bot, powered by Rasa."
+    - text: "Soy un bot, powered by Rasa."
+
+  utter_you_are_welcome:
+    - text: "De nada."
+    - text: "Un placer :)."
 
   utter_anything_else:
     - text: "¿Hay algo más en lo que pueda ayudarte?"
+    - text: "¿Te puedo ayudar en algo más?"
 
   utter_dataset_menu:
     - text: "¿Quieres saber algo sobre los datos?"
       buttons:
         - title: "Mostar gráfico"
           payload: "/plot_data"
+        - title: "Descargar archivo"
+          payload: "/download_data"
         - title: "Explicar datos"
           payload: "/explain_data"
-        - title: "Descargar CSV"
-          payload: "/download_data"
+        - title: "Mostrar datos estadísticos"
+          payload: "/statistics_data"
         - title: "No"
           payload: "/deny"
-      button_type: "inline"
+      button_type: "vertical"
 
-  utter_send_file:
-    - custom:
-        document: "{file_url}"
+  utter_ask_data_search_terms:
+    - text: "¿Qué tema te interesa?"
+    - text: "¿Qué datos quieres?"
+    - text: "¿Qué quieres que busque?"
+
+  # utter_ask_data_file_format:
+  #   - text: "En qué formato quieres descargar los datos? (CSV, XLS, PDF)"
+  #     buttons:
+  #       - title: "CSV"
+  #         payload: "csv"
+  #       - title: "XLS"
+  #         payload: "xls"
+  #       - title: "PDF"
+  #         payload: "pdf"
+  #     button_type: "inline"
+
+  utter_ask_restart:
+    - text: "¿Quieres empezar de nuevo?"
+      buttons:
+        - title: "Si"
+          payload: "si"
+        - title: "No"
+          payload: "no"
+    - text: "¿Quieres comenzar desde el principio?"
+      buttons:
+        - title: "Si"
+          payload: "si"
+        - title: "No"
+          payload: "no"
+
+  utter_search_slots:
+    - text: "Voy a buscar datos sobre {data_search_terms}..."
+
+  utter_plot_slots:
+    - text: "Voy a generar un gráfico sobre {data_search_terms}..."
+
+  utter_download_slots:
+    - text: "Voy a preparar la descarga sobre {data_search_terms} en {data_file_format}..."
+
+  utter_explain_slots:
+    - text: "Voy a generar una consulta sobre {data_search_terms}..."
+
+  utter_statistics_slots:
+    - text: "Voy a generar datos estadísticos sobre {data_search_terms}..."
 
 actions:
-  - action_fetch_data
+  - action_search_data
   - action_plot_data
   - action_explain_data
+  - action_statistics_data
   - action_download_data
+  - action_empty_slots
+  - action_ask_data_file_format
+  - validate_data_search_terms_form
+  - validate_data_file_format_form
 
-  # utter_event_time:
-  #   - custom:
-  #     blocks:
-  #       - type: section
-  #         text:
-  #           text: "¿A qué hora?"
-  #           type: mrkdwn
-  #         accessory:
-  #           type: timepicker
-  #           placeholder:
-  #             type: plain_text
-  #             text: Select a time
+forms:
+  data_search_terms_form:
+    required_slots:
+      - data_search_terms
+  data_file_format_form:
+    required_slots:
+      - data_file_format
 
 session_config:
   session_expiration_time: 60
-  carry_over_slots_to_new_session: true
+  carry_over_slots_to_new_session: false
