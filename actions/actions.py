@@ -42,6 +42,9 @@ from dotenv import load_dotenv
 from matplotlib import pyplot as plt
 import seaborn as sns
 
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+
 from rasa_sdk import Action, FormValidationAction, Tracker
 from rasa_sdk.events import SlotSet, EventType, AllSlotsReset
 from rasa_sdk.executor import CollectingDispatcher
@@ -57,6 +60,9 @@ ALLOWED_FILE_FORMATS = ["csv", "xls", "xlsx", "pdf"]
 
 aggregate_titles = ["total", "totales"]
 
+# Create a new client and connect to the server
+client = MongoClient(os.getenv("MONGODB_URI"), server_api=ServerApi("1"))
+
 
 def get_completion(prompt, model="gpt-3.5-turbo"):
     messages = [{"role": "user", "content": prompt}]
@@ -69,6 +75,18 @@ def get_completion(prompt, model="gpt-3.5-turbo"):
         frequency_penalty=0,  # this is the degree to which the model will avoid repeating the same line
         presence_penalty=0,  # this is the degree to which the model will avoid generating offensive language
     )
+
+    # Send a ping to confirm a successful connection
+    try:
+        client.admin.command("ping")
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+        db = client.get_database("logs")
+        collection = db.get_collection("completions")
+        document = {"datetime": datetime.datetime.now(), "prompt": prompt}
+        collection.insert_one(document)
+    except Exception as e:
+        print(e)
+
     return response.choices[0].message["content"]
 
 
