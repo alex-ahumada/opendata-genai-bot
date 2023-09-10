@@ -12,3 +12,9 @@ models
 .env.test.local
 credentials.yml
 results/
+
+__pycache__/
+*/__pycache__/
+*/.ipynb_checkpoints
+*/.pyte
+<_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
