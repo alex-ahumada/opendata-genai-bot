@@ -4,28 +4,6 @@
 # See this guide on how to implement these action:
 # https://rasa.com/docs/rasa/custom-actions
 
-
-# This is a simple example for a custom action which utters "Hello World!"
-
-# from typing import Any, Text, Dict, List
-#
-# from rasa_sdk import Action, Tracker
-# from rasa_sdk.executor import CollectingDispatcher
-#
-#
-# class ActionHelloWorld(Action):
-#
-#     def name(self) -> Text:
-#         return "action_hello_world"
-#
-#     def run(self, dispatcher: CollectingDispatcher,
-#             tracker: Tracker,
-#             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-#
-#         dispatcher.utter_message(text="Hello World!")
-#
-#         return []
-
 import os
 import io
 import urllib.parse
@@ -51,10 +29,6 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
 
 load_dotenv()
-
-# my_config = Config(
-#     region_name=os.getenv("AWS_REGION"),
-# )
 
 ALLOWED_FILE_FORMATS = ["csv", "xls", "xlsx", "pdf"]
 
@@ -331,12 +305,6 @@ class ActionPlotData(Action):
         try:
             # We use boto3.client instead of boto3.resource because the bug
             # is not fixed in boto3.resource
-            # s3 = boto3.resource(
-            #     "s3",
-            #     aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
-            #     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            # )
-            # bucket = s3.Bucket(os.getenv("S3_BUCKET_NAME"))
             s3_client = boto3.client(
                 "s3",
                 region_name=os.getenv("AWS_REGION"),
@@ -349,12 +317,6 @@ class ActionPlotData(Action):
         finally:
             try:
                 # Save image to S3
-                # bucket.put_object(
-                #     Body=img_data,
-                #     ContentType="image/png",
-                #     Key=f"{conversation_id}.png",
-                #     Expires=datetime.datetime.now() + datetime.timedelta(days=1),
-                # )
                 s3_client.put_object(
                     Body=img_data,
                     ContentType="image/png",
@@ -364,14 +326,6 @@ class ActionPlotData(Action):
                 )
 
                 # Get a presigned url to avoid public access
-                # presigned_image_url = s3.meta.client.generate_presigned_url(
-                #     "get_object",
-                #     Params={
-                #         "Bucket": f"{os.getenv('S3_BUCKET_NAME')}",
-                #         "Key": f"{conversation_id}.png",
-                #     },
-                #     ExpiresIn=3600,
-                # )
                 presigned_image_url = s3_client.generate_presigned_url(
                     "get_object",
                     Params={
@@ -438,9 +392,7 @@ class ActionDownloadData(Action):
         request_url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendDocument"
         document_url = data_meta["distribution"][document_index]["downloadURL"]
         filename = os.path.basename(document_url)
-        # TODO: setting verify to False disables SSL verification, which is necessary for our local setup with DDEV
-        # This should be removed in a final release
-        response_document = requests.get(document_url, verify=False)
+        response_document = requests.get(document_url, verify=True)
 
         if response_document.ok:
             print("CSV file downloaded successfully.")
