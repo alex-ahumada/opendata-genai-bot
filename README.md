@@ -2,13 +2,13 @@
 
 ![Logo Open Data](./images/ODGenAI_logo.png)
 
-# Work in Progress
+## Work in Progress
 
 Project developed as the Final Degree Project in Information Technology Engineering at UNED. Please don't use in production.
 
-# Install instructions
+## Install instructions
 
-## Install dependencies
+### Install dependencies
 
 ```shell
 virtualenv venv
@@ -22,7 +22,7 @@ Then, add spaCy es_core_news_md model
 python -m spacy download es_core_news_md
 ```
 
-## Create configuration file
+### Create configuration file
 
 You'll need:
 
@@ -37,21 +37,21 @@ cp .env.example .env
 vi .env
 ```
 
-# Run servers
+## Run servers
 
-## Run NLU Core Server
+### Run NLU Core Server
 
 ```shell
 rasa run
 ```
 
-## Run Rasa SDK Action Server
+### Run Rasa SDK Action Server
 
 ```shell
 rasa run actions
 ```
 
-## ngrok for local development
+### ngrok for local development
 
 You can use your local Telegram webhook with ngrok.
 
