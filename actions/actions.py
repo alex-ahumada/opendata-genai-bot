@@ -9,11 +9,15 @@ import io
 import urllib.parse
 import datetime
 import requests
+import json
 import pandas as pd
 import numpy as np
 import openai
+from pandasai import SmartDataframe
+from pandasai.llm import OpenAI
+from pandasai.helpers.openai_info import get_openai_callback
+from pandasai.helpers.openai_info import get_openai_token_cost_for_model
 import boto3
-from botocore.config import Config
 from botocore.exceptions import ClientError
 from typing import Any, Text, Dict, List
 from dotenv import load_dotenv
@@ -37,31 +41,99 @@ aggregate_titles = ["total", "totales"]
 # Create a new client and connect to the server
 client = MongoClient(os.getenv("MONGODB_URI"), server_api=ServerApi("1"))
 
+# Set OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
 
-def get_completion(prompt, model="gpt-3.5-turbo"):
+
+def get_completion(
+    conversation_id: str,
+    rasa_action: str,
+    prompt: str,
+    model: str = os.getenv('OPENAI_MODEL')
+) -> str:
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
         model=model,  # this is the model that the API will use to generate the response
         messages=messages,  # this is the prompt that the model will complete
         temperature=0.5,  # this is the degree of randomness of the model's output
-        max_tokens=256,  # this is the maximum number of tokens that the model can generate
+        max_tokens=2000,  # this is the maximum number of tokens that the model can generate
         top_p=1,  # this is the probability that the model will generate a token that is in the top p tokens
         frequency_penalty=0,  # this is the degree to which the model will avoid repeating the same line
         presence_penalty=0,  # this is the degree to which the model will avoid generating offensive language
     )
 
-    # Send a ping to confirm a successful connection
+    # Log completion to MongoDB
     try:
         client.admin.command("ping")
         print("Pinged your deployment. You successfully connected to MongoDB!")
         db = client.get_database("logs")
         collection = db.get_collection("completions")
-        document = {"datetime": datetime.datetime.now(), "prompt": prompt}
+        document = {
+            "created": response.created,
+            "conversation_id": conversation_id,
+            "model": response.model,
+            "rasa_action": rasa_action,
+            "prompt": prompt,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens,
+                "cost": get_openai_token_cost_for_model(
+                    model_name=model, num_tokens=response.usage.total_tokens
+                ),
+            },
+        }
         collection.insert_one(document)
     except Exception as e:
         print(e)
 
     return response.choices[0].message["content"]
+
+
+def get_completion_with_pandasai(
+    conversation_id: str,
+    rasa_action: str,
+    prompt: str,
+    dataframe: pd.DataFrame,
+    model: str = "gpt-3.5-turbo",
+) -> str:
+    sdf = SmartDataframe(
+        dataframe,
+        config={
+            "llm": llm,
+        },
+    )
+    sdf.chat(prompt)
+    with get_openai_callback() as cb:
+        response = sdf.chat(prompt)
+        print(response)
+        print(cb)
+
+    # Log completion to MongoDB
+    try:
+        client.admin.command("ping")
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+        db = client.get_database("logs")
+        collection = db.get_collection("completions")
+        document = {
+            "created": datetime.datetime.now(),
+            "conversation_id": conversation_id,
+            "model": model,
+            "rasa_action": rasa_action,
+            "prompt": prompt,
+            "usage": {
+                "prompt_tokens": cb.prompt_tokens,
+                "completion_tokens": cb.completion_tokens,
+                "total_tokens": cb.total_tokens,
+                "cost": cb.total_cost,
+            },
+        }
+        collection.insert_one(document)
+    except Exception as e:
+        print(e)
+
+    return response
 
 
 class ValidateDataSearchTermsForm(FormValidationAction):
@@ -164,7 +236,7 @@ class ActionSearchData(Action):
         conversation_id = tracker.sender_id
 
         # Search dataset with search terms
-        search_terms = tracker.get_slot("data_search_terms")
+        search_terms = tracker.get_slot("data_search_terms") or ""
         # print(search_terms)
         url_search = f"{os.getenv('DKAN_API')}/search?fulltext={urllib.parse.quote(search_terms)}"
         # print("url_search in action:", url_search)
@@ -265,7 +337,7 @@ class ActionPlotData(Action):
         # print("CSV:", df_csv.shape)
         # print("CSV:", df_csv.info())
 
-        plt.style.use("seaborn")
+        # plt.style.use("seaborn")
         plt.figure(figsize=(10, 5))
         # plt.title(data["query"]["resources"][0]["id"])
         plt.title(data_meta["title"])
@@ -309,7 +381,7 @@ class ActionPlotData(Action):
                 "s3",
                 region_name=os.getenv("AWS_REGION"),
                 endpoint_url=f"https://s3.{os.getenv('AWS_REGION')}.amazonaws.com",
-                aws_access_key_id=os.getenv("AWS_ACCESS_KET_ID"),
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
             )
         except ClientError as ce:
@@ -427,11 +499,6 @@ class ActionExplainData(Action):
         # Get conversation id
         conversation_id = tracker.sender_id
 
-        # Set OpenAI API key
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        # models = openai.Model.list()
-        # print(models)
-
         data = tracker.get_slot("data")
         print(data["results"])
         prompt = f"""
@@ -440,7 +507,11 @@ class ActionExplainData(Action):
         ```{data["results"]}```
         """
         try:
-            response = get_completion(prompt)
+            response = get_completion(
+                conversation_id=conversation_id,
+                rasa_action="action_explain_data",
+                prompt=prompt,
+            )
             print(response)
             dispatcher.utter_message(text=response)
         except Exception as e:
@@ -465,21 +536,21 @@ class ActionStatisticsData(Action):
         # Get conversation id
         conversation_id = tracker.sender_id
 
-        # Set OpenAI API key
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-
         data = tracker.get_slot("data")
-        prompt = f"""
-        Summarize the dataset in json delimited by triple backticks \ 
-        in spanish. Include statistics such as \
-        the number of rows and columns, the mean, median, mode, and \
-        standard deviation of each column, and the correlation between \
-        columns. \n
-        ```{data}```
-        """
+        prompt = f"Summarize the data in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns."
+
+        # Create pandas dataframe with json string
+        df = pd.read_json(json.dumps(data["results"]))
+
+        print(df)
+        print(df.to_markdown())
 
         try:
-            response = get_completion(prompt)
+            response = get_completion(
+                conversation_id=conversation_id,
+                rasa_action="action_statistics_data",
+                prompt=prompt,
+            )
             print(response)
             dispatcher.utter_message(text=response)
         except Exception as e:
@@ -487,6 +558,46 @@ class ActionStatisticsData(Action):
                 text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
             )
         # dispatcher.utter_message(text="ChatGPT en modo debug (code: 002).")
+
+        return []
+
+
+class ActionCustomQueryData(Action):
+    def name(self) -> Text:
+        return "action_custom_query_data"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        # Get conversation id
+        conversation_id = tracker.sender_id
+
+        data = tracker.get_slot("data")
+        prompt = tracker.get_slot("data_custom_query")
+
+        # Create pandas dataframe with json string
+        df = pd.read_json(json.dumps(data["results"]))
+
+        print(df)
+        print(df.to_markdown())
+
+        # try:
+        #     response = get_completion_with_pandasai(
+        #         conversation_id=conversation_id,
+        #         rasa_action="action_statistics_data",
+        #         prompt=prompt,
+        #         dataframe=df,
+        #     )
+        #     print(response)
+        #     dispatcher.utter_message(text=response)
+        # except Exception as e:
+        #     dispatcher.utter_message(
+        #         text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
+        #     )
+        dispatcher.utter_message(text=f"ChatGPT en modo debug (code: 003): {prompt}")
 
         return []
 
@@ -502,3 +613,16 @@ class ActionEmptySlots(Action):
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
         return [AllSlotsReset()]
+
+
+class ActionEmptyCustomQuerySlot(Action):
+    def name(self) -> Text:
+        return "action_empty_custom_query_slot"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        return [SlotSet("data_custom_query", None)]
