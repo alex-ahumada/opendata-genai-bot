@@ -50,7 +50,7 @@ def get_completion(
     conversation_id: str,
     rasa_action: str,
     prompt: str,
-    model: str = os.getenv('OPENAI_MODEL')
+    model: str = os.getenv("OPENAI_MODEL"),
 ) -> str:
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
@@ -99,9 +99,10 @@ def get_completion_with_pandasai(
     model: str = "gpt-3.5-turbo",
 ) -> str:
     sdf = SmartDataframe(
-        dataframe,
+        df=dataframe,
         config={
             "llm": llm,
+            "custom_instructions": "The query will be made in Spanish and the results will be returned in Spanish.",
         },
     )
     sdf.chat(prompt)
@@ -154,7 +155,7 @@ class ValidateDataSearchTermsForm(FormValidationAction):
         response_search_json = response_search.json()
         num_items = response_search_json["total"]
 
-        # print("url_search in validation:", url_search)
+        print("url_search in validation:", url_search)
 
         if num_items == "0":
             dispatcher.utter_message(text="Lo siento, no tengo datos sobre ese tema.")
@@ -163,9 +164,9 @@ class ValidateDataSearchTermsForm(FormValidationAction):
         return {"data_search_terms": slot_value}
 
 
-class ValidateDataFileFormatForm(FormValidationAction):
+class ValidateDataDownloadForm(FormValidationAction):
     def name(self) -> Text:
-        return "validate_data_file_format_form"
+        return "validate_data_download_form"
 
     def validate_data_file_format(
         self,
@@ -176,7 +177,7 @@ class ValidateDataFileFormatForm(FormValidationAction):
     ) -> Dict[Text, Any]:
         """Validate `data_file_format` value."""
 
-        # print("DATA_FILE_FORMAT Validation")
+        print("DATA_FILE_FORMAT Validation")
 
         data_meta = tracker.get_slot("data_meta")
 
@@ -502,8 +503,7 @@ class ActionExplainData(Action):
         data = tracker.get_slot("data")
         print(data["results"])
         prompt = f"""
-        Summarize the dataset in json delimited by triple backticks \ 
-        into a single sentence in spanish.
+        Summarize the dataset in json delimited by triple backticks into a single sentence in spanish.
         ```{data["results"]}```
         """
         try:
@@ -537,13 +537,18 @@ class ActionStatisticsData(Action):
         conversation_id = tracker.sender_id
 
         data = tracker.get_slot("data")
-        prompt = f"Summarize the data in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns."
+        # prompt = f"Summarize the data in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns."
+
+        prompt = f"""
+        Summarize the data in json delimited by triple backticks in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns.
+        ```{data["results"]}```
+        """
 
         # Create pandas dataframe with json string
-        df = pd.read_json(json.dumps(data["results"]))
+        # df = pd.read_json(json.dumps(data["results"]))
 
-        print(df)
-        print(df.to_markdown())
+        # print(df)
+        # print(df.to_markdown())
 
         try:
             response = get_completion(
@@ -576,13 +581,33 @@ class ActionCustomQueryData(Action):
         conversation_id = tracker.sender_id
 
         data = tracker.get_slot("data")
-        prompt = tracker.get_slot("data_custom_query")
+        query = tracker.get_slot("data_custom_query")
+
+        prompt = f"""
+        I need you to answer a question in spanish about the data in json delimited by triple backticks:
+        The question is: {query}
+        
+        ```{data["results"]}```
+        """
+
+        try:
+            response = get_completion(
+                conversation_id=conversation_id,
+                rasa_action="action_custom_query_data",
+                prompt=prompt,
+            )
+            print(response)
+            dispatcher.utter_message(text=response)
+        except Exception as e:
+            dispatcher.utter_message(
+                text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
+            )
 
         # Create pandas dataframe with json string
-        df = pd.read_json(json.dumps(data["results"]))
+        # df = pd.read_json(json.dumps(data["results"]))
 
-        print(df)
-        print(df.to_markdown())
+        # print(df)
+        # print(df.to_markdown())
 
         # try:
         #     response = get_completion_with_pandasai(
@@ -597,9 +622,9 @@ class ActionCustomQueryData(Action):
         #     dispatcher.utter_message(
         #         text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
         #     )
-        dispatcher.utter_message(text=f"ChatGPT en modo debug (code: 003): {prompt}")
+        # dispatcher.utter_message(text=f"ChatGPT en modo debug (code: 003): {prompt}")
 
-        return []
+        return [SlotSet("data_custom_query", None)]
 
 
 class ActionEmptySlots(Action):
@@ -615,14 +640,14 @@ class ActionEmptySlots(Action):
         return [AllSlotsReset()]
 
 
-class ActionEmptyCustomQuerySlot(Action):
-    def name(self) -> Text:
-        return "action_empty_custom_query_slot"
+# class ActionEmptyCustomQuerySlot(Action):
+#     def name(self) -> Text:
+#         return "action_empty_custom_query_slot"
 
-    def run(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-    ) -> List[Dict[Text, Any]]:
-        return [SlotSet("data_custom_query", None)]
+#     def run(
+#         self,
+#         dispatcher: CollectingDispatcher,
+#         tracker: Tracker,
+#         domain: Dict[Text, Any],
+#     ) -> List[Dict[Text, Any]]:
+#         return [SlotSet("data_custom_query", None)]

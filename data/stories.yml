@@ -1,6 +1,11 @@
 version: "3.1"
 
 stories:
+  # - story: User greets
+  #   steps:
+  #     - intent: greet
+  #     - action: utter_greet
+
   - story: User requests to search data
     steps:
       - intent: search_data
@@ -45,8 +50,8 @@ stories:
       - active_loop: null
       - action: action_search_data
       # Second form
-      - action: data_file_format_form
-      - active_loop: data_file_format_form
+      - action: data_download_form
+      - active_loop: data_download_form
       - slot_was_set:
           - requested_slot: null
       - active_loop: null
@@ -69,6 +74,7 @@ stories:
       - action: utter_explain_slots
       - action: action_search_data
       - action: action_explain_data
+      # Continue loop
       - action: utter_anything_else
       - action: utter_dataset_menu
       - intent: deny
@@ -86,6 +92,33 @@ stories:
       - action: utter_statistics_slots
       - action: action_search_data
       - action: action_statistics_data
+      # Continue loop
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User requests to search data with custom query
+    steps:
+      - intent: custom_query_data
+      # First form
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_search_data
+      # Second form
+      - action: data_custom_query_form
+      - active_loop: data_custom_query_form
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: utter_custom_query_slots
+      - action: action_custom_query_data
+      # Continue loop
+      # - action: action_empty_slots
       - action: utter_anything_else
       - action: utter_dataset_menu
       - intent: deny
@@ -94,11 +127,11 @@ stories:
 
   - story: User doesn't want to continue request in search terms form
     steps:
-      - or:
-          - intent: plot_data
-          - intent: download_data
-          - intent: explain_data
-          - intent: statistics_data
+      # - or:
+      #     - intent: plot_data
+      #     - intent: download_data
+      #     - intent: explain_data
+      #     - intent: statistics_data
       - action: data_search_terms_form
       - active_loop: data_search_terms_form
       - intent: stop
@@ -118,16 +151,9 @@ stories:
 
   - story: User doesn't want to continue download in file format form
     steps:
-      - intent: download_data
-      # First form
-      - action: data_search_terms_form
-      - active_loop: data_search_terms_form
-      - slot_was_set:
-          - requested_slot: null
-      - active_loop: null
       # Second form
-      - action: data_file_format_form
-      - active_loop: data_file_format_form
+      - action: data_download_form
+      - active_loop: data_download_form
       - intent: stop
       - action: utter_ask_restart
       - or:
@@ -143,3 +169,56 @@ stories:
       - intent: deny
       - action: utter_goodbye
       - action: action_empty_slots
+
+  - story: User doesn't want to continue download in custom query form
+    steps:
+      # Second form
+      - action: data_custom_query_form
+      - active_loop: data_custom_query_form
+      - intent: stop
+      - action: utter_ask_restart
+      - or:
+          - intent: stop
+          - intent: affirm
+      - action: action_deactivate_loop
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_empty_slots
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User doesn't want to continue
+    steps:
+      - intent: stop
+      - action: utter_ask_restart
+      - or:
+          - intent: stop
+          - intent: affirm
+      - action: action_deactivate_loop
+      - slot_was_set:
+          - requested_slot: null
+      - active_loop: null
+      - action: action_empty_slots
+      - action: utter_anything_else
+      - action: utter_dataset_menu
+      - intent: deny
+      - action: utter_goodbye
+      - action: action_empty_slots
+
+  - story: User wants to continue after restart
+    steps:
+      - action: utter_ask_restart
+      - intent: deny
+      - action: utter_anything_else
+      # - action: utter_dataset_menu
+
+  - story: User wants to continue after restart
+    steps:
+      - action: utter_ask_restart
+      - intent: deny
+      - action: utter_anything_else
+      # - action: utter_dataset_menu

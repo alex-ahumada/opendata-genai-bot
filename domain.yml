@@ -1,30 +1,38 @@
 version: "3.1"
 
+##################################################
+# INTENTS
+##################################################
 intents:
   - start_telegram
-  - how_to_get_started
   - greet
   - goodbye
   - thanks
   - affirm
   - deny
   - stop
-  - contact_info
+  # - inform
   - bot_challenge
-  - inform
   - search_data
   - plot_data
+  - download_data
   - explain_data
   - statistics_data
-  - download_data
-  - request_plot_form
-  - request_download_form
+  - custom_query_data
+  - reset
 
+##################################################
+# ENTITIES
+##################################################
 entities:
   - username
   - data_search_terms
   - data_file_format
+  - data_custom_query
 
+##################################################
+# SLOTS
+##################################################
 slots:
   username:
     type: text
@@ -32,6 +40,7 @@ slots:
     mappings:
       - type: from_entity
         entity: username
+        intent: greet
   data:
     type: text
     influence_conversation: true
@@ -50,25 +59,98 @@ slots:
     mappings:
       - type: from_entity
         entity: data_search_terms
+        intent: search_data
+      - type: from_entity
+        entity: data_search_terms
+        intent: plot_data
+      - type: from_entity
+        entity: data_search_terms
+        intent: download_data
+      - type: from_entity
+        entity: data_search_terms
+        intent: explain_data
+      - type: from_entity
+        entity: data_search_terms
+        intent: statistics_data
+      - type: from_entity
+        entity: data_search_terms
+        intent: custom_query_data
+      - type: from_text
+        conditions:
+         - active_loop: data_search_terms_form
+           requested_slot: data_search_terms
   data_file_format:
     type: text
     influence_conversation: true
     mappings:
       - type: from_entity
         entity: data_file_format
+        intent: download_data
+      - type: from_text
+        conditions:
+         - active_loop: data_download_form
+           requested_slot: data_file_format
+  data_custom_query:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_text
+        conditions:
+         - active_loop: data_custom_query_form
+           requested_slot: data_custom_query
 
+##################################################
+# FORMS
+##################################################
+forms:
+  data_search_terms_form:
+    required_slots:
+      - data_search_terms
+  # data_plot_form:
+  #   required_slots:
+  #     - data_search_terms
+  data_download_form:
+    required_slots:
+      # - data_search_terms
+      - data_file_format
+  data_custom_query_form:
+    required_slots:
+      # - data_search_terms
+      - data_custom_query
+
+##################################################
+# ACTIONS
+##################################################
+actions:
+  - action_search_data
+  - action_plot_data
+  - action_explain_data
+  - action_statistics_data
+  - action_custom_query_data
+  - action_download_data
+  - action_empty_slots
+  - action_empty_custom_query_slot
+  - utter_ask_data_search_terms
+  # - utter_ask_data_file_format
+  - action_ask_data_file_format
+  - utter_ask_data_custom_query
+  - validate_data_search_terms_form
+  - validate_data_download_form
+  #- validate_data_custom_query_form
+
+##################################################
+# RESPONSES
+##################################################
 responses:
   utter_welcome:
     - text: "¡Hola! ¿En qué puedo ayudarte?"
       channel: "telegram"
+      
   utter_greet:
     - text: "¡Hola! ¿Qué tal estás?"
     - text: "¡Hey! ¿Qué tal estás?"
     - text: "¡Hey {username}! ¿Qué tal estás?"
-    - text: "¡Hola {name}! ¿Cómo va tu día?"
-
-  utter_did_that_help:
-    - text: "Did that help you?"
+    - text: "¡Hola {username}! ¿Cómo va tu día?"
 
   utter_goodbye:
     - text: "¡Hasta luego!"
@@ -76,7 +158,7 @@ responses:
     - text: "Bye"
 
   utter_iamabot:
-    - text: "Soy un bot, powered by Rasa."
+    - text: "Soy un bot, funcionando con Rasa."
 
   utter_you_are_welcome:
     - text: "De nada."
@@ -97,8 +179,10 @@ responses:
           payload: "/explain_data"
         - title: "Mostrar datos estadísticos"
           payload: "/statistics_data"
-        - title: "No"
-          payload: "/deny"
+        - title: "Consulta personalizada"
+          payload: "/custom_query_data"
+        - title: "Reiniciar"
+          payload: "/stop"
       button_type: "vertical"
 
   utter_ask_data_search_terms:
@@ -116,6 +200,11 @@ responses:
   #       - title: "PDF"
   #         payload: "pdf"
   #     button_type: "inline"
+
+  utter_ask_data_custom_query:
+    - text: "¿Qué consulta quieres hacer?"
+    - text: "¿Qué consulta quieres que haga?"
+    - text: "¿Qué consulta quieres que genere?"
 
   utter_ask_restart:
     - text: "¿Quieres empezar de nuevo?"
@@ -146,24 +235,8 @@ responses:
   utter_statistics_slots:
     - text: "Voy a generar datos estadísticos sobre {data_search_terms}..."
 
-actions:
-  - action_search_data
-  - action_plot_data
-  - action_explain_data
-  - action_statistics_data
-  - action_download_data
-  - action_empty_slots
-  - action_ask_data_file_format
-  - validate_data_search_terms_form
-  - validate_data_file_format_form
-
-forms:
-  data_search_terms_form:
-    required_slots:
-      - data_search_terms
-  data_file_format_form:
-    required_slots:
-      - data_file_format
+  utter_custom_query_slots:
+    - text: "Voy a realizar la consulta: {data_custom_query}..."
 
 session_config:
   session_expiration_time: 60
