@@ -13,10 +13,11 @@ import json
 import pandas as pd
 import numpy as np
 import openai
-from pandasai import SmartDataframe
-from pandasai.llm import OpenAI
-from pandasai.helpers.openai_info import get_openai_callback
-from pandasai.helpers.openai_info import get_openai_token_cost_for_model
+
+# from pandasai import SmartDataframe
+# from pandasai.llm import OpenAI
+# from .helpers.openai_info import get_openai_callback
+from .helpers.openai import get_openai_token_cost_for_model
 import boto3
 from botocore.exceptions import ClientError
 from typing import Any, Text, Dict, List
@@ -28,7 +29,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from rasa_sdk import Action, FormValidationAction, Tracker
-from rasa_sdk.events import SlotSet, EventType, AllSlotsReset
+from rasa_sdk.events import SlotSet, EventType, AllSlotsReset, UserUtteranceReverted
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
 
@@ -43,14 +44,14 @@ client = MongoClient(os.getenv("MONGODB_URI"), server_api=ServerApi("1"))
 
 # Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
-llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
+# llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
 
 
 def get_completion(
     conversation_id: str,
     rasa_action: str,
     prompt: str,
-    model: str = os.getenv("OPENAI_MODEL"),
+    model: str = os.environ.get("OPENAI_MODEL", "gpt-4"),
 ) -> str:
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
@@ -91,50 +92,50 @@ def get_completion(
     return response.choices[0].message["content"]
 
 
-def get_completion_with_pandasai(
-    conversation_id: str,
-    rasa_action: str,
-    prompt: str,
-    dataframe: pd.DataFrame,
-    model: str = "gpt-3.5-turbo",
-) -> str:
-    sdf = SmartDataframe(
-        df=dataframe,
-        config={
-            "llm": llm,
-            "custom_instructions": "The query will be made in Spanish and the results will be returned in Spanish.",
-        },
-    )
-    sdf.chat(prompt)
-    with get_openai_callback() as cb:
-        response = sdf.chat(prompt)
-        print(response)
-        print(cb)
+# def get_completion_with_pandasai(
+#     conversation_id: str,
+#     rasa_action: str,
+#     prompt: str,
+#     dataframe: pd.DataFrame,
+#     model: str = os.environ.get("OPENAI_MODEL", "gpt-4"),
+# ) -> str:
+#     sdf = SmartDataframe(
+#         df=dataframe,
+#         config={
+#             "llm": llm,
+#             "custom_instructions": "The query will be made in Spanish and the results will be returned in Spanish.",
+#         },
+#     )
+#     sdf.chat(prompt)
+#     with get_openai_callback() as cb:
+#         response = sdf.chat(prompt)
+#         print(response)
+#         print(cb)
 
-    # Log completion to MongoDB
-    try:
-        client.admin.command("ping")
-        print("Pinged your deployment. You successfully connected to MongoDB!")
-        db = client.get_database("logs")
-        collection = db.get_collection("completions")
-        document = {
-            "created": datetime.datetime.now(),
-            "conversation_id": conversation_id,
-            "model": model,
-            "rasa_action": rasa_action,
-            "prompt": prompt,
-            "usage": {
-                "prompt_tokens": cb.prompt_tokens,
-                "completion_tokens": cb.completion_tokens,
-                "total_tokens": cb.total_tokens,
-                "cost": cb.total_cost,
-            },
-        }
-        collection.insert_one(document)
-    except Exception as e:
-        print(e)
+#     # Log completion to MongoDB
+#     try:
+#         client.admin.command("ping")
+#         print("Pinged your deployment. You successfully connected to MongoDB!")
+#         db = client.get_database("logs")
+#         collection = db.get_collection("completions")
+#         document = {
+#             "created": datetime.datetime.now(),
+#             "conversation_id": conversation_id,
+#             "model": model,
+#             "rasa_action": rasa_action,
+#             "prompt": prompt,
+#             "usage": {
+#                 "prompt_tokens": cb.prompt_tokens,
+#                 "completion_tokens": cb.completion_tokens,
+#                 "total_tokens": cb.total_tokens,
+#                 "cost": cb.total_cost,
+#             },
+#         }
+#         collection.insert_one(document)
+#     except Exception as e:
+#         print(e)
 
-    return response
+#     return response
 
 
 class ValidateDataSearchTermsForm(FormValidationAction):
@@ -638,6 +639,35 @@ class ActionEmptySlots(Action):
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
         return [AllSlotsReset()]
+
+
+class ActionHandleButton(Action):
+    def name(self) -> Text:
+        return "action_handle_button"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        # Get the payload of the clicked button
+        payload = tracker.latest_action_name
+
+
+class ActionCustomFallback(Action):
+    def name(self) -> Text:
+        return "action_custom_fallback"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(template="utter_unexpected")
+
+        return [UserUtteranceReverted()]
 
 
 # class ActionEmptyCustomQuerySlot(Action):
