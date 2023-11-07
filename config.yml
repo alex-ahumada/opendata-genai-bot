@@ -4,7 +4,7 @@ recipe: default.v1
 
 # The assistant project unique identifier
 # This default value must be replaced with a unique assistant name within your deployment
-assistant_id: uned_pfg_assistant
+assistant_id: opendata_genai_bot
 
 # Configuration for Rasa NLU.
 # https://rasa.com/docs/rasa/nlu/components/
@@ -71,9 +71,9 @@ policies:
   #     constrain_similarities: true
   - name: MemoizationPolicy
   - name: RulePolicy
-  - name: UnexpecTEDIntentPolicy
-    max_history: 5
-    epochs: 100
+  # - name: UnexpecTEDIntentPolicy
+  #   max_history: 5
+  #   epochs: 100
   - name: TEDPolicy
     max_history: 5 # cuidado con este parámetro, nos permite realizar conversaciones más complejas pero aumenta mucho el tiempo de entrenamiento
     epochs: 200
