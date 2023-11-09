@@ -1,0 +1,11 @@
+# Use the Rasa SDK image as the base image
+FROM rasa/rasa:3.6.13-full
+
+# Switch to the root user
+USER root
+
+# Install the spacy package
+RUN pip install spacy
+
+# Download the es_core_news_md model
+RUN python -m spacy download es_core_news_md

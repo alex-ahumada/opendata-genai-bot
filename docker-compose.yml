@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  rasa:
+    image: alexahumada/opendata-genai-bot-rasa:latest
+    ports:
+      - 5005:5005
+    volumes:
+      - ./:/app
+    command:
+      - run
+  action:
+    image: alexahumada/opendata-genai-bot-actions:latest
+    expose:
+     - 5055
