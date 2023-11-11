@@ -9,7 +9,13 @@ services:
       - ./:/app
     command:
       - run
+      - --debug
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
     expose:
      - 5055
+    command:
+      - start
+      - --actions
+      - actions.actions
+      - --debug
