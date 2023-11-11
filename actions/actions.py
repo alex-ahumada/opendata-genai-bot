@@ -12,7 +12,9 @@ import requests
 import json
 import pandas as pd
 import numpy as np
-import openai
+from openai import OpenAI
+from openai.types.chat import ChatCompletion, ChatCompletionMessage
+
 
 # from pandasai import SmartDataframe
 # from pandasai.llm import OpenAI
@@ -40,10 +42,11 @@ ALLOWED_FILE_FORMATS = ["csv", "xls", "xlsx", "pdf"]
 aggregate_titles = ["total", "totales"]
 
 # Create a new client and connect to the server
-client = MongoClient(os.getenv("MONGODB_URI"), server_api=ServerApi("1"))
+mongo_client = MongoClient(os.getenv("MONGODB_URI"), server_api=ServerApi("1"))
 
 # Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
+# openai.api_key = os.getenv("OPENAI_API_KEY")
 # llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
 
 
@@ -53,10 +56,11 @@ def get_completion(
     prompt: str,
     model: str = os.environ.get("OPENAI_MODEL", "gpt-4"),
 ) -> str:
-    messages = [{"role": "user", "content": prompt}]
-    response = openai.ChatCompletion.create(
+    response: ChatCompletion = client.chat.completions.create(
         model=model,  # this is the model that the API will use to generate the response
-        messages=messages,  # this is the prompt that the model will complete
+        messages=[
+            {"role": "user", "content": prompt}
+        ],  # this is the prompt that the model will complete
         temperature=0.5,  # this is the degree of randomness of the model's output
         max_tokens=2000,  # this is the maximum number of tokens that the model can generate
         top_p=1,  # this is the probability that the model will generate a token that is in the top p tokens
@@ -66,9 +70,9 @@ def get_completion(
 
     # Log completion to MongoDB
     try:
-        client.admin.command("ping")
+        mongo_client.admin.command("ping")
         print("Pinged your deployment. You successfully connected to MongoDB!")
-        db = client.get_database("logs")
+        db = mongo_client.get_database("logs")
         collection = db.get_collection("completions")
         document = {
             "created": response.created,
@@ -89,7 +93,7 @@ def get_completion(
     except Exception as e:
         print(e)
 
-    return response.choices[0].message["content"]
+    return response.choices[0].message.content
 
 
 # def get_completion_with_pandasai(
