@@ -11,7 +11,6 @@ import datetime
 import requests
 import json
 import pandas as pd
-import numpy as np
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
@@ -142,6 +141,21 @@ def get_completion(
 #     return response
 
 
+def clear_menu(conversation_id: str, message_id: str, dispatcher: CollectingDispatcher):
+    # Define the Telegram API URL and the parameters for the deleteMessage method
+    url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/deleteMessage"
+    params = {"chat_id": conversation_id, "message_id": message_id}
+
+    # Send the request to the Telegram API
+    response = requests.post(url, params=params)
+
+    # Check the response
+    if response.status_code == 200:
+        dispatcher.utter_message(text="Menu removed successfully.")
+    else:
+        dispatcher.utter_message(text="Failed to remove menu.")
+
+
 class ValidateDataSearchTermsForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_data_search_terms_form"
@@ -210,22 +224,54 @@ class AskForDataFileFormat(Action):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> List[EventType]:
+        conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
+
         data_meta = tracker.get_slot("data_meta")
 
         buttons = []
 
         for distribution in data_meta["distribution"]:
             buttons.append(
-                {
-                    "title": distribution["format"].upper(),
-                    "payload": distribution["format"].lower(),
-                }
+                [
+                    {
+                        "text": distribution["format"].upper(),
+                        "callback_data": distribution["format"].lower(),
+                    }
+                ]
             )
 
-        dispatcher.utter_message(
-            text="¿En qué formato quieres los datos?", buttons=buttons
+        keyboard = json.dumps({"inline_keyboard": buttons})
+
+        request_url = (
+            f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendMessage"
         )
-        return []
+        params = {
+            "chat_id": conversation_id,
+            "text": "¿En qué formato quieres los datos?",
+            "reply_markup": keyboard,
+        }
+
+        try:
+            response = requests.post(
+                request_url,
+                params=params,
+            )
+        except Exception as e:
+            print(e)
+
+        if response.ok:
+            print("Menu rendered.")
+            print(response.json())
+            return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
+        else:
+            print("Error rendering menu.")
+            print(response.json())
+            dispatcher.utter_message(text="Error al mostrar el menu.")
+            return []
 
 
 class ActionSearchData(Action):
@@ -293,19 +339,6 @@ class ActionSearchData(Action):
         ]
 
 
-class ActionDownloadData(Action):
-    def name(self) -> Text:
-        return "action_download_data"
-
-    def run(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-    ) -> List[Dict[Text, Any]]:
-        return []
-
-
 class ActionPlotData(Action):
     def name(self) -> Text:
         return "action_plot_data"
@@ -318,6 +351,10 @@ class ActionPlotData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
 
         dispatcher.utter_message(text="Generando gráfico...")
 
@@ -430,7 +467,7 @@ class ActionPlotData(Action):
                 #     ],
                 # )
 
-        return []
+        return [SlotSet("menu_message_id", None)]
 
 
 class ActionDownloadData(Action):
@@ -450,6 +487,10 @@ class ActionDownloadData(Action):
         # dispatcher.utter_message(response="utter_send_file", file_url=document_url)
 
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
 
         data_meta = tracker.get_slot("data_meta")
         data_file_format = tracker.get_slot("data_file_format")
@@ -489,7 +530,7 @@ class ActionDownloadData(Action):
             print("Failed to send the CSV file.")
             dispatcher.utter_message(text="Error enviando el archivo.")
 
-        return []
+        return [SlotSet("menu_message_id", None)]
 
 
 class ActionExplainData(Action):
@@ -504,6 +545,10 @@ class ActionExplainData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
 
         data = tracker.get_slot("data")
         print(data["results"])
@@ -525,7 +570,7 @@ class ActionExplainData(Action):
             )
         # dispatcher.utter_message(text="ChatGPT en modo debug (code: 001).")
 
-        return []
+        return [SlotSet("menu_message_id", None)]
 
 
 class ActionStatisticsData(Action):
@@ -540,6 +585,10 @@ class ActionStatisticsData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
 
         data = tracker.get_slot("data")
         # prompt = f"Summarize the data in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns."
@@ -569,7 +618,7 @@ class ActionStatisticsData(Action):
             )
         # dispatcher.utter_message(text="ChatGPT en modo debug (code: 002).")
 
-        return []
+        return [SlotSet("menu_message_id", None)]
 
 
 class ActionCustomQueryData(Action):
@@ -584,6 +633,10 @@ class ActionCustomQueryData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher)
 
         data = tracker.get_slot("data")
         query = tracker.get_slot("data_custom_query")
@@ -629,7 +682,7 @@ class ActionCustomQueryData(Action):
         #     )
         # dispatcher.utter_message(text=f"ChatGPT en modo debug (code: 003): {prompt}")
 
-        return [SlotSet("data_custom_query", None)]
+        return [SlotSet("data_custom_query", None), SlotSet("menu_message_id", None)]
 
 
 class ActionEmptySlots(Action):
@@ -645,9 +698,9 @@ class ActionEmptySlots(Action):
         return [AllSlotsReset()]
 
 
-class ActionHandleButton(Action):
+class ActionShowMenu(Action):
     def name(self) -> Text:
-        return "action_handle_button"
+        return "action_show_menu"
 
     def run(
         self,
@@ -655,28 +708,80 @@ class ActionHandleButton(Action):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
-        # Get the payload of the clicked button
-        payload = tracker.latest_action_name
+        conversation_id = tracker.sender_id
+
+        buttons = [
+            [
+                {
+                    "text": "Mostar gráfico",
+                    "callback_data": "/plot_data",
+                }
+            ],
+            [
+                {
+                    "text": "Descargar archivo",
+                    "callback_data": "/download_data",
+                }
+            ],
+            [
+                {
+                    "text": "Explicar datos",
+                    "callback_data": "/explain_data",
+                }
+            ],
+            [
+                {
+                    "text": "Mostrar datos estadísticos",
+                    "callback_data": "/statistics_data",
+                }
+            ],
+            [
+                {
+                    "text": "Consulta personalizada",
+                    "callback_data": "/custom_query_data",
+                }
+            ],
+            [
+                {
+                    "text": "Reiniciar",
+                    "callback_data": "/stop",
+                }
+            ],
+        ]
+
+        keyboard = json.dumps({"inline_keyboard": buttons})
+
+        request_url = (
+            f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendMessage"
+        )
+        params = {
+            "chat_id": conversation_id,
+            "text": "¿Quieres saber algo sobre los datos?",
+            "reply_markup": keyboard,
+        }
+
+        try:
+            response = requests.post(
+                request_url,
+                params=params,
+            )
+        except Exception as e:
+            print(e)
+
+        if response.ok:
+            print("Menu rendered.")
+            print(response.json())
+            return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
+        else:
+            print("Error rendering menu.")
+            print(response.json())
+            dispatcher.utter_message(text="Error al mostrar el menu.")
+            return []
 
 
-class ActionCustomFallback(Action):
-    def name(self) -> Text:
-        return "action_custom_fallback"
-
-    def run(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: Dict[Text, Any],
-    ) -> List[Dict[Text, Any]]:
-        dispatcher.utter_message(template="utter_unexpected")
-
-        return [UserUtteranceReverted()]
-
-
-# class ActionEmptyCustomQuerySlot(Action):
+# class ActionCustomFallback(Action):
 #     def name(self) -> Text:
-#         return "action_empty_custom_query_slot"
+#         return "action_custom_fallback"
 
 #     def run(
 #         self,
@@ -684,4 +789,6 @@ class ActionCustomFallback(Action):
 #         tracker: Tracker,
 #         domain: Dict[Text, Any],
 #     ) -> List[Dict[Text, Any]]:
-#         return [SlotSet("data_custom_query", None)]
+#         dispatcher.utter_message(template="utter_unexpected")
+
+#         return [UserUtteranceReverted()]

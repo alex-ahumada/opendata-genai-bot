@@ -98,6 +98,12 @@ slots:
         conditions:
          - active_loop: data_custom_query_form
            requested_slot: data_custom_query
+  menu_message_id:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+        action: action_dataset_menu
 
 ##################################################
 # FORMS
@@ -131,12 +137,13 @@ actions:
   - action_empty_slots
   - action_empty_custom_query_slot
   - utter_ask_data_search_terms
-  # - utter_ask_data_file_format
   - action_ask_data_file_format
   - utter_ask_data_custom_query
   - validate_data_search_terms_form
   - validate_data_download_form
   #- validate_data_custom_query_form
+  - action_show_menu
+  # - action_remove_menu
 
 ##################################################
 # RESPONSES
@@ -190,17 +197,6 @@ responses:
     - text: "¿Qué datos quieres?"
     - text: "¿Qué quieres que busque?"
 
-  # utter_ask_data_file_format:
-  #   - text: "En qué formato quieres descargar los datos? (CSV, XLS, PDF)"
-  #     buttons:
-  #       - title: "CSV"
-  #         payload: "csv"
-  #       - title: "XLS"
-  #         payload: "xls"
-  #       - title: "PDF"
-  #         payload: "pdf"
-  #     button_type: "inline"
-
   utter_ask_data_custom_query:
     - text: "¿Qué consulta quieres hacer?"
     - text: "¿Qué consulta quieres que haga?"
@@ -237,6 +233,27 @@ responses:
 
   utter_custom_query_slots:
     - text: "Voy a realizar la consulta: {data_custom_query}..."
+
+templates:
+  utter_unexpected:
+    - text: "Lo siento, no entendí tu consulta. ¿Qué quieres hacer?"
+      buttons:
+        - title: "Mostar gráfico"
+          payload: "/plot_data"
+        - title: "Descargar archivo"
+          payload: "/download_data"
+        - title: "Explicar datos"
+          payload: "/explain_data"
+        - title: "Mostrar datos estadísticos"
+          payload: "/statistics_data"
+        - title: "Consulta personalizada"
+          payload: "/custom_query_data"
+        - title: "Reiniciar"
+          payload: "/stop"
+      button_type: "vertical"
+
+# fallback_action:
+#   - action_custom_fallback
 
 session_config:
   session_expiration_time: 60

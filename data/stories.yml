@@ -17,8 +17,9 @@ stories:
       - action: utter_search_slots
       - action: action_search_data
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -34,8 +35,9 @@ stories:
       - action: action_search_data
       - action: action_plot_data
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -58,8 +60,9 @@ stories:
       - action: utter_download_slots
       - action: action_download_data
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -76,8 +79,9 @@ stories:
       - action: action_explain_data
       # Continue loop
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -94,8 +98,9 @@ stories:
       - action: action_statistics_data
       # Continue loop
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -120,8 +125,9 @@ stories:
       # Continue loop
       # - action: action_empty_slots
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -145,8 +151,9 @@ stories:
       - active_loop: null
       - action: action_empty_slots
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
 
   - story: User doesn't want to continue download in file format form
@@ -165,8 +172,9 @@ stories:
       - active_loop: null
       - action: action_empty_slots
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -186,8 +194,9 @@ stories:
       - active_loop: null
       - action: action_empty_slots
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -204,8 +213,9 @@ stories:
       - active_loop: null
       - action: action_empty_slots
       - action: utter_anything_else
-      - action: utter_dataset_menu
+      - action: action_show_menu
       - intent: deny
+      # - action: action_remove_menu
       - action: utter_goodbye
       - action: action_empty_slots
 
@@ -214,11 +224,21 @@ stories:
       - action: utter_ask_restart
       - intent: deny
       - action: utter_anything_else
-      # - action: utter_dataset_menu
 
   - story: User wants to continue after restart
     steps:
       - action: utter_ask_restart
       - intent: deny
       - action: utter_anything_else
-      # - action: utter_dataset_menu
+
+  # - story: Remove menu after user selection
+  #   steps:
+  #     - action: action_show_menu
+  #     - or:
+  #         - intent: plot_data
+  #         - intent: download_data
+  #         - intent: explain_data
+  #         - intent: statistics_data
+  #         - intent: custom_query_data
+  #         - intent: deny
+  #     - action: action_remove_menu
