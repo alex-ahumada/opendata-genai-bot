@@ -1,6 +1,8 @@
 .DS_Store
 .vscode
 .rasa/cache
+.config
+.keras
 models
 .env
 .env.development
