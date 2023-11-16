@@ -12,6 +12,8 @@ services:
       - --debug
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
+    volumes:
+      - ./actions:/app/actions
     expose:
      - 5055
     command:
