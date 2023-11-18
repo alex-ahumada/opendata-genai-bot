@@ -11,6 +11,10 @@ nlu:
       - \d{2}:\d{2}
       - \d{2}:\d{2}:\d{2}
 
+  - regex: dataset_uuid
+    examples: |
+      - \b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b
+
   - synonym: concierto
     examples: |
       - evento musical
@@ -121,9 +125,19 @@ nlu:
       - no realmente
       - no exactamente
 
-  - intent: stop
+  - intent: start_over
     examples: |
-      - /stop
+      - /start_over
+      - Quiero volver a empezar
+      - Quiero empezar de nuevo
+      - Quiero reiniciar
+      - Quiero reiniciar la conversación
+      - Quiero reiniciar la conversación desde el principio
+      - Empecemos de nuevo
+      - Reiniciar
+      - Reiniciar la conversación
+      - Reiniciar la conversación desde el principio
+      - Reiniciar conversación
       - Para
       - Para ya
       - Me lo he pensado mejor
@@ -131,11 +145,6 @@ nlu:
       - No quiero continuar con esto
       - He cambiado de opinión
       - Tengo otra idea
-
-  # - intent: contact_info
-  #   examples: |
-  #     - Necesitaría el [número de teléfono](contact_info) de la [Delegación de Medio Ambiente](place)
-  #     - Quiero el [correo electrónico](contact_info) de la [Delegación de Juventud](place)
 
   - intent: bot_challenge
     examples: |
@@ -212,20 +221,6 @@ nlu:
       - Otra consulta sobre el conjunto de datos
       - Quiero hacer una consulta personalizada
       - Quiero hacer una consulta personalizada sobre [deuda viva](data_search_terms)
-
-  - intent: reset
-    examples: |
-      - /reset
-      - Quiero volver a empezar
-      - Quiero empezar de nuevo
-      - Quiero reiniciar
-      - Quiero reiniciar la conversación
-      - Quiero reiniciar la conversación desde el principio
-      - Empecemos de nuevo
-      - Reiniciar
-      - Reiniciar la conversación
-      - Reiniciar la conversación desde el principio
-      - Reiniciar conversación
 
   # - intent: inform
   #   examples: |

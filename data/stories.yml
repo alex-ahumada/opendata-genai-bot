@@ -1,11 +1,6 @@
 version: "3.1"
 
 stories:
-  # - story: User greets
-  #   steps:
-  #     - intent: greet
-  #     - action: utter_greet
-
   - story: User requests to search data
     steps:
       - intent: search_data
@@ -18,10 +13,24 @@ stories:
       - action: action_search_data
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to search data and restarts
+  #   steps:
+  #     - intent: search_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_search_slots
+  #     - action: action_search_data
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User requests to plot data
     steps:
@@ -36,10 +45,25 @@ stories:
       - action: action_plot_data
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to plot data and restarts
+  #   steps:
+  #     - intent: plot_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_plot_slots
+  #     - action: action_search_data
+  #     - action: action_plot_data
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User requests to download data
     steps:
@@ -61,10 +85,32 @@ stories:
       - action: action_download_data
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to download data and restarts
+  #   steps:
+  #     - intent: download_data
+  #     # First form
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: action_search_data
+  #     # Second form
+  #     - action: data_download_form
+  #     - active_loop: data_download_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_download_slots
+  #     - action: action_download_data
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User requests to explain data
     steps:
@@ -80,10 +126,26 @@ stories:
       # Continue loop
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to explain data and restarts
+  #   steps:
+  #     - intent: explain_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_explain_slots
+  #     - action: action_search_data
+  #     - action: action_explain_data
+  #     # Continue loop
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User requests to calculate statistics data
     steps:
@@ -99,10 +161,26 @@ stories:
       # Continue loop
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to calculate statistics data and restarts
+  #   steps:
+  #     - intent: statistics_data
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_statistics_slots
+  #     - action: action_search_data
+  #     - action: action_statistics_data
+  #     # Continue loop
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User requests to search data with custom query
     steps:
@@ -123,122 +201,106 @@ stories:
       - action: utter_custom_query_slots
       - action: action_custom_query_data
       # Continue loop
-      # - action: action_empty_slots
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+
+  # - story: User requests to search data with custom query and restarts
+  #   steps:
+  #     - intent: custom_query_data
+  #     # First form
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: action_search_data
+  #     # Second form
+  #     - action: data_custom_query_form
+  #     - active_loop: data_custom_query_form
+  #     - slot_was_set:
+  #         - requested_slot: null
+  #     - active_loop: null
+  #     - action: utter_custom_query_slots
+  #     - action: action_custom_query_data
+  #     # Continue loop
+  #     - action: utter_anything_else
+  #     - action: action_show_menu
+  #     - intent: start_over
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
 
   - story: User doesn't want to continue request in search terms form
     steps:
-      # - or:
-      #     - intent: plot_data
-      #     - intent: download_data
-      #     - intent: explain_data
-      #     - intent: statistics_data
       - action: data_search_terms_form
       - active_loop: data_search_terms_form
-      - intent: stop
-      - action: utter_ask_restart
-      - or:
-          - intent: stop
-          - intent: affirm
+      - intent: start_over
+      - action: action_show_restart_menu
+      - intent: affirm
       - action: action_deactivate_loop
       - slot_was_set:
           - requested_slot: null
       - active_loop: null
-      - action: action_empty_slots
+      - action: action_restart_custom
       - action: utter_anything_else
-      - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
 
   - story: User doesn't want to continue download in file format form
     steps:
       # Second form
       - action: data_download_form
       - active_loop: data_download_form
-      - intent: stop
-      - action: utter_ask_restart
-      - or:
-          - intent: stop
-          - intent: affirm
+      - intent: start_over
+      - action: action_show_restart_menu
+      - intent: affirm
       - action: action_deactivate_loop
       - slot_was_set:
           - requested_slot: null
       - active_loop: null
-      - action: action_empty_slots
+      - action: action_restart_custom
       - action: utter_anything_else
-      - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
 
   - story: User doesn't want to continue download in custom query form
     steps:
       # Second form
       - action: data_custom_query_form
       - active_loop: data_custom_query_form
-      - intent: stop
-      - action: utter_ask_restart
-      - or:
-          - intent: stop
-          - intent: affirm
+      - intent: start_over
+      - action: action_show_restart_menu
+      - intent: affirm
       - action: action_deactivate_loop
       - slot_was_set:
           - requested_slot: null
       - active_loop: null
-      - action: action_empty_slots
+      - action: action_restart_custom
+      - action: utter_anything_else
+
+  - story: User wants to restart after successful action
+    steps:
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
+      - intent: start_over
+      - action: action_show_restart_menu
+      - intent: affirm
+      - action: action_restart_custom
+      - action: utter_anything_else
 
-  - story: User doesn't want to continue
+  - story: User cancels restart after successful action
     steps:
-      - intent: stop
-      - action: utter_ask_restart
-      - or:
-          - intent: stop
-          - intent: affirm
-      - action: action_deactivate_loop
-      - slot_was_set:
-          - requested_slot: null
-      - active_loop: null
-      - action: action_empty_slots
+      - action: action_show_menu
+      - intent: start_over
+      - action: action_show_restart_menu
+      - intent: deny
       - action: utter_anything_else
       - action: action_show_menu
-      - intent: deny
-      # - action: action_remove_menu
-      - action: utter_goodbye
-      - action: action_empty_slots
 
-  - story: User wants to continue after restart
-    steps:
-      - action: utter_ask_restart
-      - intent: deny
-      - action: utter_anything_else
-
-  - story: User wants to continue after restart
-    steps:
-      - action: utter_ask_restart
-      - intent: deny
-      - action: utter_anything_else
-
-  # - story: Remove menu after user selection
+  # - story: User ends conversation
   #   steps:
-  #     - action: action_show_menu
+  #     - action: action_show_restart_menu
+  #     - intent: affirm
+  #     - action: action_restart_custom
+  #     - action: utter_anything_else
   #     - or:
-  #         - intent: plot_data
-  #         - intent: download_data
-  #         - intent: explain_data
-  #         - intent: statistics_data
-  #         - intent: custom_query_data
   #         - intent: deny
-  #     - action: action_remove_menu
+  #         - intent: goodbye
+  #     - action: utter_goodbye

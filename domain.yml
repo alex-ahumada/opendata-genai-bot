@@ -10,7 +10,7 @@ intents:
   - thanks
   - affirm
   - deny
-  - stop
+  - start_over
   # - inform
   - bot_challenge
   - search_data
@@ -19,7 +19,6 @@ intents:
   - explain_data
   - statistics_data
   - custom_query_data
-  - reset
 
 ##################################################
 # ENTITIES
@@ -77,8 +76,8 @@ slots:
         intent: custom_query_data
       - type: from_text
         conditions:
-         - active_loop: data_search_terms_form
-           requested_slot: data_search_terms
+          - active_loop: data_search_terms_form
+            requested_slot: data_search_terms
   data_file_format:
     type: text
     influence_conversation: true
@@ -88,22 +87,20 @@ slots:
         intent: download_data
       - type: from_text
         conditions:
-         - active_loop: data_download_form
-           requested_slot: data_file_format
+          - active_loop: data_download_form
+            requested_slot: data_file_format
   data_custom_query:
     type: text
     influence_conversation: true
     mappings:
       - type: from_text
         conditions:
-         - active_loop: data_custom_query_form
-           requested_slot: data_custom_query
+          - active_loop: data_custom_query_form
+            requested_slot: data_custom_query
   menu_message_id:
     type: text
     influence_conversation: true
-    mappings:
-      - type: custom
-        action: action_dataset_menu
+    mappings: []
 
 ##################################################
 # FORMS
@@ -112,16 +109,11 @@ forms:
   data_search_terms_form:
     required_slots:
       - data_search_terms
-  # data_plot_form:
-  #   required_slots:
-  #     - data_search_terms
   data_download_form:
     required_slots:
-      # - data_search_terms
       - data_file_format
   data_custom_query_form:
     required_slots:
-      # - data_search_terms
       - data_custom_query
 
 ##################################################
@@ -134,16 +126,15 @@ actions:
   - action_statistics_data
   - action_custom_query_data
   - action_download_data
-  - action_empty_slots
+  - action_restart_custom
   - action_empty_custom_query_slot
   - utter_ask_data_search_terms
   - action_ask_data_file_format
   - utter_ask_data_custom_query
   - validate_data_search_terms_form
   - validate_data_download_form
-  #- validate_data_custom_query_form
   - action_show_menu
-  # - action_remove_menu
+  - action_show_restart_menu
 
 ##################################################
 # RESPONSES
@@ -152,11 +143,19 @@ responses:
   utter_welcome:
     - text: "¡Hola! ¿En qué puedo ayudarte?"
       channel: "telegram"
-      
+
   utter_greet:
-    - text: "¡Hola! ¿Qué tal estás?"
-    - text: "¡Hey! ¿Qué tal estás?"
-    - text: "¡Hey {username}! ¿Qué tal estás?"
+    - condition:
+        - type: slot
+          name: username
+          value: null
+      text: "¡Hola! ¿Qué tal estás?"
+    - condition:
+        - type: slot
+          name: username
+          value: null
+      text: "¡Hey! ¿Qué tal estás?"
+    - text: "¡Hola {username}! ¿Qué tal estás?"
     - text: "¡Hola {username}! ¿Cómo va tu día?"
 
   utter_goodbye:
@@ -171,26 +170,13 @@ responses:
     - text: "De nada."
     - text: "Un placer :)."
 
+  utter_lets_continue:
+    - text: "Bueno, continuemos."
+    - text: "Vamos a continuar."
+
   utter_anything_else:
     - text: "¿Hay algo más en lo que pueda ayudarte?"
     - text: "¿Te puedo ayudar en algo más?"
-
-  utter_dataset_menu:
-    - text: "¿Quieres saber algo sobre los datos?"
-      buttons:
-        - title: "Mostar gráfico"
-          payload: "/plot_data"
-        - title: "Descargar archivo"
-          payload: "/download_data"
-        - title: "Explicar datos"
-          payload: "/explain_data"
-        - title: "Mostrar datos estadísticos"
-          payload: "/statistics_data"
-        - title: "Consulta personalizada"
-          payload: "/custom_query_data"
-        - title: "Reiniciar"
-          payload: "/stop"
-      button_type: "vertical"
 
   utter_ask_data_search_terms:
     - text: "¿Qué tema te interesa?"
@@ -201,20 +187,6 @@ responses:
     - text: "¿Qué consulta quieres hacer?"
     - text: "¿Qué consulta quieres que haga?"
     - text: "¿Qué consulta quieres que genere?"
-
-  utter_ask_restart:
-    - text: "¿Quieres empezar de nuevo?"
-      buttons:
-        - title: "Si"
-          payload: "si"
-        - title: "No"
-          payload: "no"
-    - text: "¿Quieres comenzar desde el principio?"
-      buttons:
-        - title: "Si"
-          payload: "si"
-        - title: "No"
-          payload: "no"
 
   utter_search_slots:
     - text: "Voy a buscar datos sobre {data_search_terms}..."
@@ -234,23 +206,23 @@ responses:
   utter_custom_query_slots:
     - text: "Voy a realizar la consulta: {data_custom_query}..."
 
-templates:
-  utter_unexpected:
-    - text: "Lo siento, no entendí tu consulta. ¿Qué quieres hacer?"
-      buttons:
-        - title: "Mostar gráfico"
-          payload: "/plot_data"
-        - title: "Descargar archivo"
-          payload: "/download_data"
-        - title: "Explicar datos"
-          payload: "/explain_data"
-        - title: "Mostrar datos estadísticos"
-          payload: "/statistics_data"
-        - title: "Consulta personalizada"
-          payload: "/custom_query_data"
-        - title: "Reiniciar"
-          payload: "/stop"
-      button_type: "vertical"
+# templates:
+#   utter_unexpected:
+#     - text: "Lo siento, no entendí tu consulta. ¿Qué quieres hacer?"
+#       buttons:
+#         - title: "Mostar gráfico"
+#           payload: "/plot_data"
+#         - title: "Descargar archivo"
+#           payload: "/download_data"
+#         - title: "Explicar datos"
+#           payload: "/explain_data"
+#         - title: "Mostrar datos estadísticos"
+#           payload: "/statistics_data"
+#         - title: "Consulta personalizada"
+#           payload: "/custom_query_data"
+#         - title: "Reiniciar"
+#           payload: "/restart"
+#       button_type: "vertical"
 
 # fallback_action:
 #   - action_custom_fallback

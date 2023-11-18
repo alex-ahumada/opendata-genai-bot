@@ -26,10 +26,10 @@ rules:
       - intent: thanks
       - action: utter_you_are_welcome
 
-  - rule: Reset slots
-    steps:
-      - intent: reset
-      - action: action_empty_slots
+  # - rule: Restart and reset slots
+  #   steps:
+  #     - intent: restart
+  #     - action: action_show_restart_menu
 
   # - rule: Activate Search form
   #   steps:
@@ -96,14 +96,14 @@ rules:
   #     - action: data_search_terms_form
   #     - active_loop: data_search_terms_form
 
-  - rule: Interruption in Search Terms form
-    condition:
-      - active_loop: data_search_terms_form
-    steps:
-      - intent: bot_challenge
-      - action: utter_iamabot
-      - action: data_search_terms_form
-      - active_loop: data_search_terms_form
+  # - rule: Interruption in Search Terms form
+  #   condition:
+  #     - active_loop: data_search_terms_form
+  #   steps:
+  #     - intent: bot_challenge
+  #     - action: utter_iamabot
+  #     - action: data_search_terms_form
+  #     - active_loop: data_search_terms_form
 
   # - rule: Interruption in Download form
   #   condition:
