@@ -9,15 +9,18 @@ services:
       - ./:/app
     command:
       - run
-      - --debug
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
-    volumes:
-      - ./actions:/app/actions
     expose:
-     - 5055
-    command:
-      - start
-      - --actions
-      - actions.actions
-      - --debug
+      - 5055
+  postgres:
+    image: postgres:latest
+    volumes:
+      - rasa-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: rasa
+      POSTGRES_PASSWORD: rasa
+      POSTGRES_DB: rasa
+
+volumes:
+  rasa-postgres:

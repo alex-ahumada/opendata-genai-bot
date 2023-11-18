@@ -7,7 +7,6 @@ USER root
 # Install the spacy package
 RUN pip install spacy
 
-# Download the es_core_news_md model
+# Download the es_core_news_es and es_core_news_md models
 RUN python -m spacy download es_core_news_sm
 RUN python -m spacy download es_core_news_md
-RUN python -m spacy download es_core_news_lg
