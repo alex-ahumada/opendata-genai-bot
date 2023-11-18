@@ -11,7 +11,6 @@ intents:
   - affirm
   - deny
   - start_over
-  # - inform
   - bot_challenge
   - search_data
   - plot_data
@@ -26,6 +25,7 @@ intents:
 entities:
   - username
   - data_search_terms
+  - dataset_id
   - data_file_format
   - data_custom_query
 
@@ -47,6 +47,12 @@ slots:
       - type: custom
         action: action_search_data
   data_meta:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: custom
+        action: action_search_data
+  dataset_id:
     type: text
     influence_conversation: true
     mappings:
@@ -121,6 +127,7 @@ forms:
 ##################################################
 actions:
   - action_search_data
+  - action_select_data
   - action_plot_data
   - action_explain_data
   - action_statistics_data
@@ -206,26 +213,9 @@ responses:
   utter_custom_query_slots:
     - text: "Voy a realizar la consulta: {data_custom_query}..."
 
-# templates:
-#   utter_unexpected:
-#     - text: "Lo siento, no entendí tu consulta. ¿Qué quieres hacer?"
-#       buttons:
-#         - title: "Mostar gráfico"
-#           payload: "/plot_data"
-#         - title: "Descargar archivo"
-#           payload: "/download_data"
-#         - title: "Explicar datos"
-#           payload: "/explain_data"
-#         - title: "Mostrar datos estadísticos"
-#           payload: "/statistics_data"
-#         - title: "Consulta personalizada"
-#           payload: "/custom_query_data"
-#         - title: "Reiniciar"
-#           payload: "/restart"
-#       button_type: "vertical"
-
-# fallback_action:
-#   - action_custom_fallback
+  utter_default:
+    - text: Lo siento, no entendí tu consulta. ¿Podrías reformularla?
+    - text: Te pido disculpas, no entendí tu petición. ¿Puedes intentarlo de nuevo?
 
 session_config:
   session_expiration_time: 60
