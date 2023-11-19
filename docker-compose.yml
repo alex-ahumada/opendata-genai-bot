@@ -10,14 +10,16 @@ services:
     command:
       - run
       - --debug
+    restart: unless-stopped
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
     volumes:
       - ./actions:/app/actions
     expose:
-     - 5055
+      - 5055
     command:
       - start
       - --actions
       - actions.actions
       - --debug
+    restart: unless-stopped

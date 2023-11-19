@@ -9,10 +9,12 @@ services:
       - ./:/app
     command:
       - run
+    restart: unless-stopped
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
     expose:
       - 5055
+    restart: unless-stopped
   postgres:
     image: postgres:latest
     volumes:
@@ -21,6 +23,7 @@ services:
       POSTGRES_USER: rasa
       POSTGRES_PASSWORD: rasa
       POSTGRES_DB: rasa
+    restart: unless-stopped
 
 volumes:
   rasa-postgres:
