@@ -15,11 +15,6 @@ nlu:
     examples: |
       - \b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b
 
-  - synonym: concierto
-    examples: |
-      - evento musical
-      - musica en directo
-
   - lookup: day
     examples: |
       - lunes
@@ -48,10 +43,189 @@ nlu:
   - lookup: data_file_format
     examples: |
       - csv
+      - .csv
+      - CSV
+      - .CSV
       - xls
+      - .xls
+      - XLS
+      - .XLS
       - xlsx
+      - .xlsx
+      - XLSX
+      - .XLSX
       - json
+      - .json
+      - JSON
+      - .JSON
       - pdf
+      - .pdf
+      - PDF
+      - .PDF
+      - geojson
+      - .geojson
+      - GEOJSON
+      - .GEOJSON
+      - arcgis
+      - .arcgis
+      - ARCGIS
+      - .ARCGIS
+      - kml
+      - .kml
+      - KML
+      - .KML
+      - xml
+      - .xml
+      - XML
+      - .XML
+      - tsv
+      - .tsv
+      - TSV
+      - .TSV
+
+  - lookup: data_search_terms
+    examples: |
+      - accesibilidad
+      - agua
+      - archivo
+      - artesanía
+      - asuntos sociales
+      - bienestar animal
+      - bienestar social
+      - cambio climático
+      - carnaval
+      - carnavales
+      - clima
+      - comercio
+      - consumo
+      - consumo de agua
+      - contratación
+      - contratos
+      - contratos menores
+      - cooperación
+      - corporación
+      - corporación municipal
+      - cultura
+      - delitos
+      - delitos de violencia de género
+      - demografía
+      - deporte
+      - desempleo
+      - deuda
+      - deuda viva
+      - educación
+      - empleo
+      - empleo público
+      - empresa
+      - enseñanza
+      - fiestas
+      - fiestas locales
+      - fiestas populares
+      - fomento
+      - gestión del agua
+      - gestión tributaria
+      - gobierno abierto
+      - hacienda
+      - IBI
+      - igualdad
+      - igualdad de género
+      - igualdad de oportunidades
+      - impuesto de bienes inmuebles
+      - impuesto de circulación
+      - impuesto de plusvalía
+      - impuesto de vehículos
+      - impuestos
+      - impuestos municipales
+      - industria
+      - infancia
+      - justicia
+      - juventud
+      - legislación
+      - legislación local
+      - legislación municipal
+      - licencias
+      - licencias de actividad
+      - licencias de apertura
+      - licencias de obras
+      - licitaciones
+      - mayores
+      - medio ambiente
+      - medioambiente
+      - memoria democrática
+      - memoria histórica
+      - movilidad
+      - movilidad sostenible
+      - normativa
+      - normativa local
+      - normativa municipal
+      - objetivos de desarrollo sostenible
+      - ods
+      - oferta de empleo público
+      - oposiciones
+      - ordenanzas
+      - ordenanzas fiscales
+      - ordenanzas municipales
+      - padrón
+      - pago a proveedores
+      - paro
+      - participación
+      - participación ciudadana
+      - patrimonio
+      - patrimonio municipal
+      - periodo de pago a proveedores
+      - personalizada
+      - PGOU
+      - pgou
+      - plan general de ordenación urbana
+      - plan de ordenación urbana
+      - plan de movilidad
+      - policía
+      - prensa
+      - presupuesto municipal
+      - presupuestos
+      - presupuestos municipales
+      - programación
+      - programación cultural
+      - recursos humanos
+      - residuos
+      - residuos sólidos urbanos
+      - residuos urbanos
+      - salud
+      - sanidad
+      - seguridad
+      - semana santa
+      - servicios municipales
+      - suministros
+      - tesorería
+      - tráfico
+      - transparencia
+      - transportes
+      - tributos
+      - turismo
+      - turismo responsable
+      - turismo sostenible
+      - urbanismo
+      - vía pública
+      - violencia de género
+      - vivienda
+      - vivienda pública
+      - fin de la pobreza
+      - hambre cero
+      - salud y bienestar
+      - educación de calidad
+      - igualdad de género
+      - agua limpia y saneamiento
+      - energía asequible y no contaminante
+      - trabajo decente y crecimiento económico
+      - industria, innovación e infraestructura
+      - reducción de las desigualdades
+      - ciudades y comunidades sostenibles
+      - producción y consumo responsables
+      - acción por el clima
+      - vida submarina
+      - vida de ecosistemas terrestres
+      - paz, justicia e instituciones sólidas
+      - alianzas para lograr los objetivos
 
   - intent: start_telegram
     examples: |
@@ -166,6 +340,17 @@ nlu:
       - Necesito datos sobre [desempleo](data_search_terms)
       - Muestra información sobre [presupuestos](data_search_terms)
       - ¿Tienes datos sobre [deuda viva](data_search_terms)?
+      - Busco datos sobre [violencia de género](data_search_terms)?
+      - Estoy buscando información sobre [presupuestos municipales](data_search_terms)
+      - ¿Tendrías datos sobre [objetivos de desarrollo sostenible](data_search_terms)?
+      - Solicito información sobre [ODS](data_search_terms)?
+      - ¿Hay información sobre [cambio climático](data_search_terms)?
+      - ¿Hay datos sobre [periodo de pago a proveedores](data_search_terms)?
+      - Busco información sobre [demografía](data_search_terms)
+      - ¿Hay datos de [enseñanza](data_search_terms)?
+      - Quiero un conjunto de datos sobre [servicios municipales](data_search_terms)
+      - Necesitaría información sobre [contratación](data_search_terms)
+      - Necesitaría información sobre [recursos humanos](data_search_terms)
 
   - intent: plot_data
     examples: |
@@ -182,12 +367,14 @@ nlu:
     examples: |
       - /download_data
       - /download_data [CSV](data_file_format)
-      - /download_data [CSV](data_file_format) [deuda viva](data_search_terms) 
+      - /download_data [.CSV](data_file_format) [deuda viva](data_search_terms) 
       - Descargar datos
       - Descargar datos en [CSV](data_file_format)
       - Descargar datos en [XLS](data_file_format)
       - Descargar datos en [PDF](data_file_format) sobre [deuda viva](data_search_terms)
-      - Descargar datos sobre [presupuestos](data_search_terms) en [XLSX](data_file_format)
+      - Descargar datos sobre [presupuestos](data_search_terms) en [.xlsx](data_file_format)
+      - Quiero descargar datos sobre [residuos urbanos](data_search_terms) en [csv](data_file_format)
+      - Quiero datos sobre [residuos](data_search_terms) en [csv](data_file_format)
 
   - intent: explain_data
     examples: |
@@ -221,36 +408,5 @@ nlu:
       - Otra consulta sobre el conjunto de datos
       - Quiero hacer una consulta personalizada
       - Quiero hacer una consulta personalizada sobre [deuda viva](data_search_terms)
-
-  # - intent: inform
-  #   examples: |
-  #     - [deuda viva](data_search_terms)
-  #     - [presupuestos](data_search_terms)
-  #     - [vivienda pública](data_search_terms)
-  #     - [elecciones municipales](data_search_terms)
-  #     - [elecciones autonómicas](data_search_terms)
-  #     - [elecciones generales](data_search_terms)
-  #     - [elecciones europeas](data_search_terms)
-  #     - [elecciones](data_search_terms)
-  #     - [desempleo](data_search_terms)
-  #     - [paro](data_search_terms)
-  #     - [residuos urbanos](data_search_terms)
-  #     - [residuos](data_search_terms)
-  #     - [consumo de agua](data_search_terms)
-  #     - [agua](data_search_terms)
-  #     - [deuda](data_search_terms)
-  #     - [deuda pública](data_search_terms)
-  #     - [deuda privada](data_search_terms)
-  #     - [deuda externa](data_search_terms)
-  #     - [deuda interna](data_search_terms)
-  #     - [deuda nacional](data_search_terms)
-  #     - [deuda municipal](data_search_terms)
-  #     - [deuda autonómica](data_search_terms)
-  #     - [deuda estatal](data_search_terms)
-  #     - [deuda soberana](data_search_terms)
-  #     - [csv](data_file_format)
-  #     - [xlx](data_file_format)
-  #     - [xlsx](data_file_format)
-  #     - [pdf](data_file_format)
-  #     - [Quiero saber la media de la deuda](data_custom_query)
-  #     - [media de la deuda](data_custom_query)
+      - Quiero hacer una consulta personalizada sobre [violencia de género](data_search_terms)
+      - Quiero hacer una consulta personalizada sobre [presupuesto municipal](data_search_terms)
