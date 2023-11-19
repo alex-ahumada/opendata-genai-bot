@@ -36,85 +36,38 @@ rules:
   #     - intent: restart
   #     - action: action_show_restart_menu
 
-  # - rule: Activate Search form
-  #   steps:
-  #     - intent: search_data
-  #     - action: data_search_terms_form
-  #     - active_loop: data_search_terms_form
+  - rule: Interruption in Search Terms form
+    condition:
+      - active_loop: data_search_terms_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_search_terms_form
+      - active_loop: data_search_terms_form
 
-  # - rule: Submit Search form
-  #   condition:
-  #     - active_loop: data_search_terms_form
-  #   steps:
-  #     - action: data_search_terms_form
-  #     - active_loop: null
-  #     - slot_was_set:
-  #         - requested_slot: null
-  #     - action: utter_search_slots
-  #     - action: action_search_data
+  - rule: Interruption in Select Dataset form
+    condition:
+      - active_loop: data_select_dataset_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_select_dataset_form
+      - active_loop: data_select_dataset_form
 
-  # - rule: Activate Plot form
-  #   steps:
-  #     - intent: plot_data
-  #     - action: data_plot_form
-  #     - active_loop: data_plot_form
+  - rule: Interruption in Download form
+    condition:
+      - active_loop: data_download_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_download_form
+      - active_loop: data_download_form
 
-  # - rule: Submit Plot form
-  #   condition:
-  #     - active_loop: data_plot_form
-  #   steps:
-  #     - action: data_plot_form
-  #     - active_loop: null
-  #     - slot_was_set:
-  #         - requested_slot: null
-  #     - action: utter_plot_slots
-  #     - action: action_search_data
-  #     - action: action_plot_data
-
-  # - rule: Activate Download form
-  #   steps:
-  #     - intent: download_data
-  #     - action: data_download_form
-  #     - active_loop: data_download_form
-
-  # - rule: Submit Download form
-  #   condition:
-  #     - active_loop: data_download_form
-  #   steps:
-  #     - action: data_download_form
-  #     - active_loop: null
-  #     - slot_was_set:
-  #         - requested_slot: null
-  #     - action: utter_download_slots
-  #     - action: action_search_data
-  #     - action: action_download_data
-
-  # - rule: Activate Explain form
-  #   steps:
-  #     - intent: explain_data
-  #     - action: data_search_terms_form
-  #     - active_loop: data_search_terms_form
-
-  # - rule: Activate Statistics form
-  #   steps:
-  #     - intent: statistics_data
-  #     - action: data_search_terms_form
-  #     - active_loop: data_search_terms_form
-
-  # - rule: Interruption in Search Terms form
-  #   condition:
-  #     - active_loop: data_search_terms_form
-  #   steps:
-  #     - intent: bot_challenge
-  #     - action: utter_iamabot
-  #     - action: data_search_terms_form
-  #     - active_loop: data_search_terms_form
-
-  # - rule: Interruption in Download form
-  #   condition:
-  #     - active_loop: data_download_form
-  #   steps:
-  #     - intent: bot_challenge
-  #     - action: utter_iamabot
-  #     - action: data_download_form
-  #     - active_loop: data_download_form
+  - rule: Interruption in Custom Query form
+    condition:
+      - active_loop: data_custom_query_form
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+      - action: data_custom_query_form
+      - active_loop: data_custom_query_form
