@@ -6,6 +6,7 @@
 
 import os
 import io
+import re
 import urllib.parse
 import datetime
 import requests
@@ -21,7 +22,7 @@ from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from .helpers.openai import get_openai_token_cost_for_model
 import boto3
 from botocore.exceptions import ClientError
-from typing import Any, Text, Dict, List
+from typing import Any, Optional, Text, Dict, List
 from dotenv import load_dotenv
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -29,7 +30,7 @@ import seaborn as sns
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from rasa_sdk import Action, FormValidationAction, Tracker
+from rasa_sdk import Action, FormValidationAction, Tracker, logger
 from rasa_sdk.events import SlotSet, EventType, AllSlotsReset, UserUtteranceReverted
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
@@ -141,7 +142,35 @@ def get_completion(
 #     return response
 
 
-def clear_menu(conversation_id: str, message_id: str, dispatcher: CollectingDispatcher):
+def create_menu(conversation_id, message, buttons):
+    keyboard = json.dumps({"inline_keyboard": buttons})
+
+    request_url = (
+        f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendMessage"
+    )
+    params = {
+        "chat_id": conversation_id,
+        "text": message,
+        "reply_markup": keyboard,
+    }
+
+    try:
+        response = requests.post(
+            request_url,
+            params=params,
+        )
+    except Exception as e:
+        print(e)
+
+    return response
+
+
+def clear_menu(
+    conversation_id: str,
+    message_id: str,
+    dispatcher: CollectingDispatcher,
+    action_name: str = "",
+):
     # Define the Telegram API URL and the parameters for the deleteMessage method
     url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/deleteMessage"
     params = {"chat_id": conversation_id, "message_id": message_id}
@@ -150,15 +179,38 @@ def clear_menu(conversation_id: str, message_id: str, dispatcher: CollectingDisp
     response = requests.post(url, params=params)
 
     # Check the response
-    if response.status_code == 200:
-        dispatcher.utter_message(text="Menu removed successfully.")
-    else:
-        dispatcher.utter_message(text="Failed to remove menu.")
+    if response.status_code != 200:
+        dispatcher.utter_message(text=f"Failed to remove menu {action_name}")
 
 
 class ValidateDataSearchTermsForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_data_search_terms_form"
+
+    # @staticmethod
+    # def required_slots(tracker: Tracker) -> List[Text]:
+    #     if tracker.latest_message["intent"].get("name") == "start_over":
+    #         return []
+    #     else:
+    #         return ["data_search_terms"]
+
+    # async def request_next_slot(
+    #     self,
+    #     dispatcher: "CollectingDispatcher",
+    #     tracker: "Tracker",
+    #     domain: Dict[Text, Any],
+    # ) -> Optional[List[EventType]]:
+    #     """Request the next slot and utter template if needed,
+    #     else return None"""
+
+    #     for slot in self.required_slots(tracker):
+    #         if self._should_request_slot(tracker, slot):
+    #             logger.debug(f"Request next slot '{slot}'")
+    #             dispatcher.utter_message(template=f"utter_ask_{slot}", **tracker.slots)
+    #             return [SlotSet("requested_slot", slot)]
+
+    #     # no more required slots to fill
+    #     return None
 
     def validate_data_search_terms(
         self,
@@ -179,8 +231,38 @@ class ValidateDataSearchTermsForm(FormValidationAction):
         if num_items == "0":
             dispatcher.utter_message(text="Lo siento, no tengo datos sobre ese tema.")
             return {"data_search_terms": None}
-        dispatcher.utter_message(text=f"OK! Quieres datos sobre {slot_value}.")
+        # dispatcher.utter_message(text=f"OK! Quieres datos sobre {slot_value}.")
         return {"data_search_terms": slot_value}
+
+
+class ValidateDataSelectDatasetForm(FormValidationAction):
+    def name(self) -> Text:
+        return "validate_data_select_dataset_form"
+
+    def validate_dataset_uuid(
+        self,
+        slot_value: Any,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> Dict[Text, Any]:
+        """Validate `dataset_uuid` value."""
+
+        # validation logic for dataset_uuid slot
+        if slot_value is not None and self._is_valid_uuid(slot_value):
+            # if the dataset_uuid slot is filled and valid
+            return {"dataset_uuid": slot_value}
+        else:
+            # if the dataset_uuid slot is not filled or invalid
+            dispatcher.utter_message(
+                text="El UUID no se corresponde con ningún conjunto de datos."
+            )
+            return {"dataset_uuid": None}
+
+    def _is_valid_uuid(self, uuid: Text) -> bool:
+        # check if the uuid is valid
+        regex = r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"
+        return re.fullmatch(regex, uuid) is not None
 
 
 class ValidateDataDownloadForm(FormValidationAction):
@@ -196,8 +278,6 @@ class ValidateDataDownloadForm(FormValidationAction):
     ) -> Dict[Text, Any]:
         """Validate `data_file_format` value."""
 
-        print("DATA_FILE_FORMAT Validation")
-
         data_meta = tracker.get_slot("data_meta")
 
         allowed_file_formats_dynamic = []
@@ -205,13 +285,71 @@ class ValidateDataDownloadForm(FormValidationAction):
         for distribution in data_meta["distribution"]:
             allowed_file_formats_dynamic.append(distribution["format"].lower())
 
-        if slot_value.lower() not in allowed_file_formats_dynamic:
+        # Check and normalize file format
+        if slot_value.replace(".", "").lower() not in allowed_file_formats_dynamic:
             dispatcher.utter_message(text="El formato no es valido.")
             return {"data_file_format": None}
-        dispatcher.utter_message(
-            text=f"¡Ok! Quieres descargar archivos en formato {slot_value}."
+
+        return {"data_file_format": slot_value.replace(".", "").lower()}
+
+
+class AskForDatasetUUID(Action):
+    def name(self) -> Text:
+        return "action_ask_dataset_uuid"
+
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[EventType]:
+        conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+        search_terms = tracker.get_slot("data_search_terms")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
+
+        # Search dataset with search terms
+        url_search = f"{os.getenv('DKAN_API')}/search?fulltext={urllib.parse.quote(search_terms)}"
+        payload = {}
+        headers = {}
+        response_search = requests.request(
+            "GET", url_search, headers=headers, data=payload
         )
-        return {"data_file_format": slot_value}
+        response_search_json = response_search.json()
+
+        dataset_keys = list(response_search_json["results"].keys())
+
+        # Generate buttons for the first 5 datasets
+        buttons = []
+
+        buttons_index_emoji = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+
+        for index, key in enumerate(dataset_keys[:5]):
+            buttons.append(
+                [
+                    {
+                        "text": f"{buttons_index_emoji[index]} {response_search_json['results'][key]['title']}",
+                        "callback_data": response_search_json["results"][key][
+                            "identifier"
+                        ].lower(),
+                    }
+                ]
+            )
+
+        response = create_menu(
+            conversation_id, "Por favor, elige un conjunto de datos.", buttons
+        )
+
+        if response.ok:
+            # print("File format menu rendered.")
+            # dispatcher.utter_message(text="Mostrando el menu (file format).")
+            return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
+        else:
+            # print("Error rendering menu (file format).")
+            dispatcher.utter_message(text="Error al mostrar el menu (dataset uuid).")
+            return []
 
 
 class AskForDataFileFormat(Action):
@@ -228,7 +366,7 @@ class AskForDataFileFormat(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         data_meta = tracker.get_slot("data_meta")
 
@@ -244,33 +382,17 @@ class AskForDataFileFormat(Action):
                 ]
             )
 
-        keyboard = json.dumps({"inline_keyboard": buttons})
-
-        request_url = (
-            f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendMessage"
+        response = create_menu(
+            conversation_id, "¿En qué formato quieres los datos?", buttons
         )
-        params = {
-            "chat_id": conversation_id,
-            "text": "¿En qué formato quieres los datos?",
-            "reply_markup": keyboard,
-        }
-
-        try:
-            response = requests.post(
-                request_url,
-                params=params,
-            )
-        except Exception as e:
-            print(e)
 
         if response.ok:
-            print("Menu rendered.")
-            print(response.json())
+            # print("File format menu rendered.")
+            # dispatcher.utter_message(text="Mostrando el menu (file format).")
             return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
         else:
-            print("Error rendering menu.")
-            print(response.json())
-            dispatcher.utter_message(text="Error al mostrar el menu.")
+            # print("Error rendering menu (file format).")
+            dispatcher.utter_message(text="Error al mostrar el menu (file format).")
             return []
 
 
@@ -286,57 +408,63 @@ class ActionSearchData(Action):
     ) -> List[Dict[Text, Any]]:
         # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
 
-        # Search dataset with search terms
-        search_terms = tracker.get_slot("data_search_terms") or ""
-        # print(search_terms)
-        url_search = f"{os.getenv('DKAN_API')}/search?fulltext={urllib.parse.quote(search_terms)}"
-        # print("url_search in action:", url_search)
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
+
+        dataset_id = tracker.get_slot("dataset_uuid")
+        dataset_meta = tracker.get_slot("data_meta")
+        dataset_data = tracker.get_slot("data")
         payload = {}
         headers = {}
-        response_search = requests.request(
-            "GET", url_search, headers=headers, data=payload
-        )
-        response_search_json = response_search.json()
-        # print(response_search_json)
 
-        dataset_keys = list(response_search_json["results"].keys())
-        dataset_id = response_search_json["results"][dataset_keys[0]]["identifier"]
-        # print(dataset_id)
+        if dataset_id is None:
+            dispatcher.utter_message(text="No hay dataset seleccionado.")
+            return [SlotSet("menu_message_id", None)]
+        elif dataset_meta is not None and dataset_data is not None:
+            return [SlotSet("menu_message_id", None)]
+            SlotSet("menu_message_id", None)
+        else:
+            dispatcher.utter_message(
+                text="Cargando información sobre el conjunto de datos seleccionado…"
+            )
+            # Fetch dataset metadata
+            url_meta = (
+                f"{os.getenv('DKAN_API')}/metastore/schemas/dataset/items/{dataset_id}"
+            )
 
-        datastore_index = 0
-        dataset_distributions = response_search_json["results"][dataset_keys[0]][
-            "distribution"
-        ]
-        # print(dataset_distributions)
+            response_meta = requests.request(
+                "GET", url_meta, headers=headers, data=payload
+            )
 
-        # Find datastore index with csv format
-        for idx, item in enumerate(dataset_distributions):
-            if item["format"] == "csv":
-                datastore_index = idx
+            if response_meta.status_code != 200:
+                dispatcher.utter_message(text="Error al cargar los datos.")
+                return [SlotSet("menu_message_id", None)]
 
-        # print("Datastore index:", datastore_index)
+            # Find datastore index with csv format
+            datastore_index = 0
+            dataset_distributions = response_meta.json()["distribution"]
+            for idx, item in enumerate(dataset_distributions):
+                if item["format"] == "csv":
+                    datastore_index = idx
 
-        # Fetch dataset metadata
-        url_meta = (
-            f"{os.getenv('DKAN_API')}/metastore/schemas/dataset/items/{dataset_id}"
-        )
-        response_meta = requests.request("GET", url_meta, headers=headers, data=payload)
+            # Fetch dataset datastore
+            url_datastore = f"{os.getenv('DKAN_API')}/datastore/query/{dataset_id}/{datastore_index}?count=true&results=true&schema=true&keys=true&format=json"
+            response_datastore = requests.request(
+                "GET", url_datastore, headers=headers, data=payload
+            )
 
-        # Fetch dataset datastore
-        url_datastore = f"{os.getenv('DKAN_API')}/datastore/query/{dataset_id}/{datastore_index}?count=true&results=true&schema=true&keys=true&format=json"
-        response_datastore = requests.request(
-            "GET", url_datastore, headers=headers, data=payload
-        )
+            if response_datastore.status_code != 200:
+                dispatcher.utter_message(text="Error al cargar los datos.")
+                return [SlotSet("menu_message_id", None)]
 
-        # Send message as json
-        dispatcher.utter_message(text=f"He encontrado el dataset con id: {dataset_id}.")
-        # dispatcher.utter_message(json_message=response.json())
-
-        return [
-            SlotSet("data", response_datastore.json()),
-            SlotSet("data_meta", response_meta.json()),
-        ]
+            return [
+                SlotSet("menu_message_id", None),
+                SlotSet("data_title", response_meta.json()["title"]),
+                SlotSet("data_meta", response_meta.json()),
+                SlotSet("data", response_datastore.json()),
+            ]
 
 
 class ActionPlotData(Action):
@@ -354,7 +482,7 @@ class ActionPlotData(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         dispatcher.utter_message(text="Generando gráfico...")
 
@@ -456,16 +584,6 @@ class ActionPlotData(Action):
                 print("error", ce)
             finally:
                 s3_client.close()
-                # Send image
-
-                # # Ask if user wants to see a plot
-                # dispatcher.utter_button_message(
-                #     text="¿Quieres que explique los datos?",
-                #     buttons=[
-                #         {"title": "Sí", "payload": "Explícame los datos"},
-                #         {"title": "No", "payload": "/no"},
-                #     ],
-                # )
 
         return [SlotSet("menu_message_id", None)]
 
@@ -490,14 +608,11 @@ class ActionDownloadData(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         data_meta = tracker.get_slot("data_meta")
         data_file_format = tracker.get_slot("data_file_format")
         data_distributions = data_meta["distribution"]
-
-        print("data distributions type", type(data_distributions))
-        print("FILE FORMAT:", data_file_format)
 
         document_index = None
         for i, obj in enumerate(data_distributions):
@@ -513,11 +628,6 @@ class ActionDownloadData(Action):
         filename = os.path.basename(document_url)
         response_document = requests.get(document_url, verify=True)
 
-        if response_document.ok:
-            print("CSV file downloaded successfully.")
-        else:
-            print("Failed to download the CSV file.")
-
         files = {
             "document": (filename, response_document.content),
         }
@@ -525,12 +635,12 @@ class ActionDownloadData(Action):
         response = requests.post(request_url, files=files, params=params)
 
         if response.ok:
-            print("CSV file sent successfully.")
+            print(f"{data_file_format} dile sent successfully.")
         else:
             print("Failed to send the CSV file.")
             dispatcher.utter_message(text="Error enviando el archivo.")
 
-        return [SlotSet("menu_message_id", None)]
+        return [SlotSet("menu_message_id", None), SlotSet("data_file_format", None)]
 
 
 class ActionExplainData(Action):
@@ -548,7 +658,7 @@ class ActionExplainData(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         data = tracker.get_slot("data")
         print(data["results"])
@@ -568,7 +678,6 @@ class ActionExplainData(Action):
             dispatcher.utter_message(
                 text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
             )
-        # dispatcher.utter_message(text="ChatGPT en modo debug (code: 001).")
 
         return [SlotSet("menu_message_id", None)]
 
@@ -588,21 +697,14 @@ class ActionStatisticsData(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         data = tracker.get_slot("data")
-        # prompt = f"Summarize the data in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns."
 
         prompt = f"""
         Summarize the data in json delimited by triple backticks in spanish. Include statistics such as the number of rows and columns, the mean, median, mode, and standard deviation of each column, and the correlation between columns.
         ```{data["results"]}```
         """
-
-        # Create pandas dataframe with json string
-        # df = pd.read_json(json.dumps(data["results"]))
-
-        # print(df)
-        # print(df.to_markdown())
 
         try:
             response = get_completion(
@@ -636,7 +738,7 @@ class ActionCustomQueryData(Action):
         message_id = tracker.get_slot("menu_message_id")
 
         if message_id is not None:
-            clear_menu(conversation_id, message_id, dispatcher)
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         data = tracker.get_slot("data")
         query = tracker.get_slot("data_custom_query")
@@ -661,33 +763,12 @@ class ActionCustomQueryData(Action):
                 text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
             )
 
-        # Create pandas dataframe with json string
-        # df = pd.read_json(json.dumps(data["results"]))
-
-        # print(df)
-        # print(df.to_markdown())
-
-        # try:
-        #     response = get_completion_with_pandasai(
-        #         conversation_id=conversation_id,
-        #         rasa_action="action_statistics_data",
-        #         prompt=prompt,
-        #         dataframe=df,
-        #     )
-        #     print(response)
-        #     dispatcher.utter_message(text=response)
-        # except Exception as e:
-        #     dispatcher.utter_message(
-        #         text="Ha ocurrido un error al evaluar los datos, el conjunto de datos es demasiado grande."
-        #     )
-        # dispatcher.utter_message(text=f"ChatGPT en modo debug (code: 003): {prompt}")
-
         return [SlotSet("data_custom_query", None), SlotSet("menu_message_id", None)]
 
 
-class ActionEmptySlots(Action):
+class ActionRestartCustom(Action):
     def name(self) -> Text:
-        return "action_empty_slots"
+        return "action_restart_custom"
 
     def run(
         self,
@@ -695,6 +776,15 @@ class ActionEmptySlots(Action):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
+        # Get conversation id
+        conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
+
+        dispatcher.utter_message(text="Empecemos de nuevo.")
+
         return [AllSlotsReset()]
 
 
@@ -708,87 +798,98 @@ class ActionShowMenu(Action):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> List[Dict[Text, Any]]:
+        # Get conversation id
         conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
+
+        # if message_id is not None:
+        #     clear_menu(conversation_id, message_id, dispatcher, self.name())
 
         buttons = [
             [
                 {
-                    "text": "Mostar gráfico",
+                    "text": "📈 Mostar gráfico",
                     "callback_data": "/plot_data",
                 }
             ],
             [
                 {
-                    "text": "Descargar archivo",
+                    "text": "📄 Descargar archivo",
                     "callback_data": "/download_data",
                 }
             ],
             [
                 {
-                    "text": "Explicar datos",
+                    "text": "ℹ️ Explicar datos",
                     "callback_data": "/explain_data",
                 }
             ],
             [
                 {
-                    "text": "Mostrar datos estadísticos",
+                    "text": "🧮 Mostrar datos estadísticos",
                     "callback_data": "/statistics_data",
                 }
             ],
             [
                 {
-                    "text": "Consulta personalizada",
+                    "text": "💬 Consulta personalizada",
                     "callback_data": "/custom_query_data",
                 }
             ],
             [
                 {
-                    "text": "Reiniciar",
-                    "callback_data": "/stop",
+                    "text": "🔄 Reiniciar",
+                    "callback_data": "/start_over",
                 }
             ],
         ]
 
-        keyboard = json.dumps({"inline_keyboard": buttons})
-
-        request_url = (
-            f"https://api.telegram.org/bot{os.getenv('TELEGRAM_API_TOKEN')}/sendMessage"
-        )
-        params = {
-            "chat_id": conversation_id,
-            "text": "¿Quieres saber algo sobre los datos?",
-            "reply_markup": keyboard,
-        }
-
-        try:
-            response = requests.post(
-                request_url,
-                params=params,
-            )
-        except Exception as e:
-            print(e)
+        response = create_menu(conversation_id, "¿Qué quieres hacer?", buttons)
 
         if response.ok:
-            print("Menu rendered.")
-            print(response.json())
             return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
         else:
-            print("Error rendering menu.")
-            print(response.json())
-            dispatcher.utter_message(text="Error al mostrar el menu.")
+            # print("Error rendering menu.")
+            dispatcher.utter_message(text="Error al mostrar el menu (main).")
             return []
 
 
-# class ActionCustomFallback(Action):
-#     def name(self) -> Text:
-#         return "action_custom_fallback"
+class ActionShowRestartMenu(Action):
+    def name(self) -> Text:
+        return "action_show_restart_menu"
 
-#     def run(
-#         self,
-#         dispatcher: CollectingDispatcher,
-#         tracker: Tracker,
-#         domain: Dict[Text, Any],
-#     ) -> List[Dict[Text, Any]]:
-#         dispatcher.utter_message(template="utter_unexpected")
+    def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        # Get conversation id
+        conversation_id = tracker.sender_id
+        message_id = tracker.get_slot("menu_message_id")
 
-#         return [UserUtteranceReverted()]
+        if message_id is not None:
+            clear_menu(conversation_id, message_id, dispatcher, self.name())
+
+        buttons = [
+            [
+                {
+                    "text": "Si",
+                    "callback_data": "si",
+                }
+            ],
+            [
+                {
+                    "text": "No",
+                    "callback_data": "no",
+                }
+            ],
+        ]
+
+        response = create_menu(conversation_id, "¿Quieres empezar de nuevo?", buttons)
+
+        if response.ok:
+            return [SlotSet("menu_message_id", response.json()["result"]["message_id"])]
+        else:
+            dispatcher.utter_message(text="Error al mostrar el menu. (restart)")
+            return []

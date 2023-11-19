@@ -25,7 +25,7 @@ intents:
 entities:
   - username
   - data_search_terms
-  - dataset_id
+  - dataset_uuid
   - data_file_format
   - data_custom_query
 
@@ -46,13 +46,13 @@ slots:
     mappings:
       - type: custom
         action: action_search_data
-  data_meta:
+  data_title:
     type: text
     influence_conversation: true
     mappings:
       - type: custom
         action: action_search_data
-  dataset_id:
+  data_meta:
     type: text
     influence_conversation: true
     mappings:
@@ -84,6 +84,14 @@ slots:
         conditions:
           - active_loop: data_search_terms_form
             requested_slot: data_search_terms
+  dataset_uuid:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: data_select_dataset_form
+            requested_slot: dataset_uuid
   data_file_format:
     type: text
     influence_conversation: true
@@ -115,6 +123,9 @@ forms:
   data_search_terms_form:
     required_slots:
       - data_search_terms
+  data_select_dataset_form:
+    required_slots:
+      - dataset_uuid
   data_download_form:
     required_slots:
       - data_file_format
@@ -127,7 +138,6 @@ forms:
 ##################################################
 actions:
   - action_search_data
-  - action_select_data
   - action_plot_data
   - action_explain_data
   - action_statistics_data
@@ -136,9 +146,11 @@ actions:
   - action_restart_custom
   - action_empty_custom_query_slot
   - utter_ask_data_search_terms
+  - action_ask_dataset_uuid
   - action_ask_data_file_format
   - utter_ask_data_custom_query
   - validate_data_search_terms_form
+  - validate_data_select_dataset_form
   - validate_data_download_form
   - action_show_menu
   - action_show_restart_menu
@@ -196,26 +208,27 @@ responses:
     - text: "¿Qué consulta quieres que genere?"
 
   utter_search_slots:
-    - text: "Voy a buscar datos sobre {data_search_terms}..."
+    - text: "Voy a buscar datos sobre: data_search_terms: {data_search_terms} \n dataset_uuid: {dataset_uuid} \n data_meta: {data_meta} \n data: {data}..."
 
   utter_plot_slots:
-    - text: "Voy a generar un gráfico sobre {data_search_terms}..."
+    - text: "Voy a generar un gráfico sobre “{data_title}”..."
 
   utter_download_slots:
-    - text: "Voy a preparar la descarga sobre {data_search_terms} en {data_file_format}..."
+    - text: "Voy a preparar la descarga de “{data_title}” en formato {data_file_format}..."
 
   utter_explain_slots:
-    - text: "Voy a generar una consulta sobre {data_search_terms}..."
+    - text: "Generando resumen de “{data_title}”..."
 
   utter_statistics_slots:
-    - text: "Voy a generar datos estadísticos sobre {data_search_terms}..."
+    - text: "Generando datos estadísticos sobre “{data_title}”..."
 
   utter_custom_query_slots:
-    - text: "Voy a realizar la consulta: {data_custom_query}..."
+    - text: "Voy a realizar la consulta: “{data_custom_query}”..."
 
   utter_default:
     - text: Lo siento, no entendí tu consulta. ¿Podrías reformularla?
     - text: Te pido disculpas, no entendí tu petición. ¿Puedes intentarlo de nuevo?
+    - text: Creo que no puedo hacer eso. ¿Puedes probar otra cosa?
 
 session_config:
   session_expiration_time: 60
