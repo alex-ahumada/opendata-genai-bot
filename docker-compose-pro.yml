@@ -9,6 +9,9 @@ services:
       - ./:/app
     command:
       - run
+      - --endpoints
+      - endpoints-pro.yml
+
     restart: unless-stopped
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest

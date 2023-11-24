@@ -16,16 +16,15 @@ action_endpoint:
 # By default the conversations are stored in memory.
 # https://rasa.com/docs/rasa/tracker-stores
 
-# tracker_store:
-#   type: SQL
-#   dialect: "postgresql" # the dialect used to interact with the db
-#   url: "postgres"
-#   db: "rasa" # path to your db
-#   username: rasa # username used for authentication
-#   password: rasa # password used for authentication
-#   # query: # optional dictionary to be added as a query string to the connection URL
-#   # driver: my-driver
-
+tracker_store:
+  type: SQL
+  dialect: "postgresql" # the dialect used to interact with the db
+  url: "postgres"
+  db: "rasa" # path to your db
+  username: rasa # username used for authentication
+  password: rasa # password used for authentication
+  # query: # optional dictionary to be added as a query string to the connection URL
+  # driver: my-driver
 #tracker_store:
 #    type: redis
 #    url: <host of the redis instance, e.g. localhost>
