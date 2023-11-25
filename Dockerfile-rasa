@@ -1,5 +1,5 @@
 # Use the Rasa SDK image as the base image
-FROM rasa/rasa:3.6.13-full
+FROM rasa/rasa:3.6.14-full
 
 # Switch to the root user
 USER root
