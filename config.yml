@@ -71,9 +71,9 @@ policies:
   #     constrain_similarities: true
   - name: MemoizationPolicy
   - name: RulePolicy
-  # - name: UnexpecTEDIntentPolicy
-  #   max_history: 5
-  #   epochs: 100
+  - name: UnexpecTEDIntentPolicy
+    max_history: 5
+    epochs: 100
   - name: TEDPolicy
     max_history: 5 # cuidado con este parámetro, nos permite realizar conversaciones más complejas pero aumenta mucho el tiempo de entrenamiento
     epochs: 200
