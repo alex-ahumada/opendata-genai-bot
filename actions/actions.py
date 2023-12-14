@@ -59,7 +59,11 @@ def get_completion(
     response: ChatCompletion = client.chat.completions.create(
         model=model,  # this is the model that the API will use to generate the response
         messages=[
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a helpful assistant. You are answering questions about a dataset. The user is located in Spain, so you should answer in Spanish and use the metric system, currencies will be in euros. Please avoid answering questions not related with the dataset or that are offensive or unehtical",
+            },
+            {"role": "user", "content": prompt},
         ],  # this is the prompt that the model will complete
         temperature=0.5,  # this is the degree of randomness of the model's output
         max_tokens=2000,  # this is the maximum number of tokens that the model can generate
@@ -439,7 +443,7 @@ class ActionSearchData(Action):
             )
 
             if response_meta.status_code != 200:
-                dispatcher.utter_message(text="Error al cargar los datos.")
+                dispatcher.utter_message(text="Error al cargar los datos del dataset.")
                 return [SlotSet("menu_message_id", None)]
 
             # Find datastore index with csv format
@@ -456,7 +460,9 @@ class ActionSearchData(Action):
             )
 
             if response_datastore.status_code != 200:
-                dispatcher.utter_message(text="Error al cargar los datos.")
+                dispatcher.utter_message(
+                    text="Error al cargar los datos del datastore."
+                )
                 return [SlotSet("menu_message_id", None)]
 
             return [
@@ -508,7 +514,7 @@ class ActionPlotData(Action):
         # print("CSV:", df_csv.shape)
         # print("CSV:", df_csv.info())
 
-        # plt.style.use("seaborn")
+        plt.style.use("ggplot")
         plt.figure(figsize=(10, 5))
         # plt.title(data["query"]["resources"][0]["id"])
         plt.title(data_meta["title"])
@@ -534,11 +540,19 @@ class ActionPlotData(Action):
                         property
                     ]["description"],
                 )
-        plt.legend(loc=(1.02, 0), borderaxespad=0, fontsize=12)
-        plt.tight_layout()
+        plt.ticklabel_format(style="plain", axis="both", useMathText=False)
+        plt.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.25),
+            frameon=False,
+            ncol=3,
+            fontsize=8,
+        )
+        plt.subplots_adjust(left=0.15, right=0.85, bottom=0.15, top=0.85)
+        # plt.tight_layout()
 
         img_data = io.BytesIO()
-        plt.savefig(img_data, format="png", dpi=72)
+        plt.savefig(img_data, format="png", dpi=72, bbox_inches="tight")
         img_data.seek(0)
 
         # Create S3 client
