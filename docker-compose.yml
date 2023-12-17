@@ -13,6 +13,8 @@ services:
     restart: unless-stopped
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
+    env_file:
+      - .env
     volumes:
       - ./actions:/app/actions
     expose:

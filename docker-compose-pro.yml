@@ -11,10 +11,11 @@ services:
       - run
       - --endpoints
       - endpoints-pro.yml
-
     restart: unless-stopped
   action_server:
     image: alexahumada/opendata-genai-bot-actions:latest
+    env_file:
+      - .env
     expose:
       - 5055
     restart: unless-stopped

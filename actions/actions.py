@@ -66,7 +66,9 @@ def get_completion(
             {"role": "user", "content": prompt},
         ],  # this is the prompt that the model will complete
         temperature=0.5,  # this is the degree of randomness of the model's output
-        max_tokens=2000,  # this is the maximum number of tokens that the model can generate
+        max_tokens=int(
+            os.environ.get("OPENAI_MAX_TOKENS", 2000)
+        ),  # this is the maximum number of tokens that the model can generate
         top_p=1,  # this is the probability that the model will generate a token that is in the top p tokens
         frequency_penalty=0,  # this is the degree to which the model will avoid repeating the same line
         presence_penalty=0,  # this is the degree to which the model will avoid generating offensive language

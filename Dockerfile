@@ -6,7 +6,6 @@ WORKDIR /app
 
 # Copy any additional custom requirements, if necessary (uncomment next line)
 COPY actions/requirements-actions.txt ./
-COPY .env ./
 
 # Change back to root user to install dependencies
 USER root

@@ -196,6 +196,9 @@ responses:
   utter_anything_else:
     - text: "¿Hay algo más en lo que pueda ayudarte?"
     - text: "¿Te puedo ayudar en algo más?"
+    - text: "¿Qué quieres hacer?"
+    - text: "¿Qué más quieres hacer?"
+    - text: "¿Qué más quieres que haga?"
 
   utter_ask_data_search_terms:
     - text: "¿Qué tema te interesa?"
@@ -217,13 +220,13 @@ responses:
     - text: "Voy a preparar la descarga de “{data_title}” en formato {data_file_format}..."
 
   utter_explain_slots:
-    - text: "Generando resumen de “{data_title}”..."
+    - text: "Generando resumen de “{data_title}”...\nEsto puede tardar un poco, por favor, ten paciencia."
 
   utter_statistics_slots:
-    - text: "Generando datos estadísticos sobre “{data_title}”..."
+    - text: "Generando datos estadísticos sobre “{data_title}”...\nEsto puede tardar un poco, por favor, ten paciencia."
 
   utter_custom_query_slots:
-    - text: "Voy a realizar la consulta: “{data_custom_query}”..."
+    - text: "Voy a realizar la consulta: “{data_custom_query}”...\nEsto puede tardar un poco, por favor, ten paciencia."
 
   utter_default:
     - text: Lo siento, no entendí tu consulta. ¿Podrías reformularla?
